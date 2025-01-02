@@ -13,7 +13,7 @@ File: tupolev-tb3.scad. Soviet heavy bomber. [Schematics](https://commons.wikime
 ![top view](tupolev-tb3-top.png)
 
 ## Heinkel He 111
-File: heinkel-he111.scad. German medium bomber. Under construction. [Schematics](https://commons.wikimedia.org/wiki/File:Heinkel_He_111_H-1_3-view_line_drawing.svg) (Wikimedia Commons)
+File: heinkel-he111.scad. German medium bomber. [Schematics](https://commons.wikimedia.org/wiki/File:Heinkel_He_111_H-1_3-view_line_drawing.svg) (Wikimedia Commons)
 
 ![front view](heinkel-he111-front.png)
 ![left view](heinkel-he111-left.png)

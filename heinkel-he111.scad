@@ -19,42 +19,40 @@ Sections of fuselage from front to rear:
     4: frustum, from trailing edge of wings to leading edge of horiz. stabil.
     5: tail
 */
+FUA  = 4/5;  // width/height ratio (must be uniform)
 FUL1 = 120;
-FUW1 =  80;
 FUH1 =  80;
 FUL2 = 120;
-FUW2 = 150;
 FUH2 = 200;
 FUL3 = 520;
-FUW3 = 190;
 FUH3 = 240;
+FBW3 = FUA*FUH3/(1+sqrt(2));  // flat bottom width
 FUL4 = 660;
-FUW4 = 100;
 FUH4 = 120;
 FUL5 = 300;
-FUW5 =   0;
 FUH5 =   0;
 
 // wings
-WIL1 =  190;  // from root to centerline of engine
-WIW1 = FUL3;  // from leading to trailing edge at root
-WIL2 =  940;  // from centerline of engine to tip
-WIW2 =  250;  // from leading to trailing edge at tip
-WIH1 =  100;  // height at root
-WIH2 =   20;  // height at tip
+WIA  = 26/5;  // width/height ratio (must be uniform)
+WIL1 = 240;   // from root to centerline of engine
+WIW1 = FUL3;
+WIL2 = 940;   // from centerline of engine to tip
+WIW2 = 250;   // from leading to trailing edge at tip
 
 // stabilisers
+STA   = 2/15;  // width/thickness ratio
 HSTL  =  860;  // horizontal - from tip to tip
 HSTW1 = FUL5;  // horizontal - from leading to trailing edge at root
-HSTW2 =  100;  // horizontal - from leading to trailing edge at tip
+HSTW2 =  150;  // horizontal - from leading to trailing edge at tip
 VSTL  =  300;  // vertical - from centerline of fuselage to tip
 VSTW1 = FUL5;  // vertical - from leading to trailing edge at root
-VSTW2 =  100;  // vertical - from leading to trailing edge at tip
+VSTW2 =  150;  // vertical - from leading to trailing edge at tip
 
 // engines
 ENR  =  70;  // radius
-ENL  = 430;  // length
+ENL  = 400;  // length
 PRR  = 180;  // propeller radius
+PHL  =  50;  // propeller hub length
 
 THIN = 20;  // minimum thickness of anything
 
@@ -63,24 +61,37 @@ FUC = [.8, .5, .5];  // fuselage
 PLC = [.8, .8, .5];  // wings and stabilisers
 OTC = [.5, .8, .8];  // other parts
 
-// fuselage (from front to rear)
+// fuselage
 color(FUC) {
-    translate([0, (FUL1+FUL3)/2+FUL2, 0]) frustum(FUW2, FUW1, 0, FUL1, FUH2, FUH1, 0);
-    translate([0, (FUL2+FUL3)/2, 0]) frustum(FUW3, FUW2, 0, FUL2, FUH3, FUH2, 0);
-    cube([FUW3, FUL3, FUH3], center=true);
-    translate([0, -(FUL3+FUL4)/2, 0]) rotate(180) frustum(FUW3, FUW4, 0, FUL4, FUH3, FUH4, 0);
-    translate([0, -(FUL3+FUL5)/2-FUL4, 0]) rotate(180) frustum(FUW4, THIN, 0, FUL5, FUH4, THIN, 0);
+    // front
+    translate([0, (FUL1+FUL3)/2+FUL2, 0]) {
+        octafrustum(FUA*FUH2, FUL1, FUH2, FUH1/FUH2, 0, 0);
+    }
+    // mid-front
+    translate([0, (FUL2+FUL3)/2, 0]) {
+        octafrustum(FUA*FUH3, FUL2, FUH3, FUH2/FUH3, 0, 0);
+    }
+    // mid
+    octafrustum(FUA*FUH3, FUL3, FUH3, 1, 0, 0);
+    // mid-rear
+    translate([0, -(FUL3+FUL4)/2, 0]) {
+        rotate(180) octafrustum(FUA*FUH3, FUL4, FUH3, FUH4/FUH3, 0, 0);
+    }
+    // rear
+    translate([0, -(FUL3+FUL5)/2-FUL4, 0]) {
+        rotate(180) octafrustum(FUA*FUH4, FUL5, FUH4, 0, 0, 0);
+    }
 }
 
 // wings
-color(PLC) translate([0, 0, (WIH1-FUH3)/2]) for(x = [-1, 1]) {
+color(PLC) translate([0, 0, (WIW1/WIA-FUH3)/2]) for(x = [-1, 1]) {
     // inner
-    translate([x*(FUW3+WIL1)/2, 0, 0]) {
-        cube([WIL1, WIW1, WIH1], center=true);
+    translate([x*(FBW3+WIL1)/2, 0, 0]) {
+        rotate(-x*90) octafrustum(WIW1, WIL1, WIW1/WIA, 1, 0, 0);
     }
     // outer
-    translate([x*((FUW3+WIL2)/2+WIL1), 0, 0]) {
-        rotate(-x*90) frustum(WIW1, WIW2, x*(WIW1-WIW2-60)/2, WIL2, WIH1, WIH2, 120);
+    translate([x*((FBW3+WIL2)/2+WIL1), 0, 0]) {
+        rotate(-x*90) octafrustum(WIW1, WIL2, WIW1/WIA, WIW2/WIW1, x*60, 120);
     }
 }
 
@@ -88,57 +99,92 @@ color(PLC) translate([0, 0, (WIH1-FUH3)/2]) for(x = [-1, 1]) {
 color(PLC) translate([0, -(FUL3+FUL5)/2-FUL4, 0]) {
     // horizontal
     for(x = [-1, 1])  {
-        translate([x*HSTL/4, 0, 0]) {
-            rotate(-x*90) frustum(FUL5, HSTW2, x*((FUL5-HSTW2)/2-70), HSTL/2, THIN, THIN, 0);
+        translate([x*HSTL/4, 0, 0]) rotate(-x*90) {
+            octafrustum(FUL5, HSTL/2, STA*FUL5, HSTW2/FUL5, x*40, 0);
         }
     }
     // vertical
-    translate([0, 0, VSTL/2]) {
-        rotate([90, 0, -90]) frustum(FUL5, VSTW2, (FUL5-VSTW2)/2-70, VSTL, THIN, THIN, 0);
+    translate([0, 0, VSTL/2]) rotate([90, 0, -90]) {
+        octafrustum(FUL5, VSTL, STA*FUL5, VSTW2/FUL5, 20, 0);
     }
 }
 
 // engines
 color(OTC) for(x = [-1, 1]) {
-    translate([x*(FUW3/2+WIL1), FUL3/2, (WIH1-FUH3)/2]) engine();
+    translate([x*(FBW3/2+WIL1), FUL3/2, (WIW1/WIA-FUH3)/2]) engine();
 }
 
 module engine() {
-    rotate([90, 0, 0]) cylinder(r=ENR, h=ENL, $fn=6, center=true);
-    // propeller blades
-    for(i = [0, 1, 2]) rotate([0, -90+i*120, 0]) {
-        translate([PRR/2, (ENL+THIN)/2, 0]) cube([PRR, THIN, THIN], center=true);
+    // front half
+    translate([0, ENL/4, 0]) {
+        octafrustum(ENR*2, ENL/2, ENR*2, 1, 0, 0);
+    }
+    // rear half
+    translate([0, -ENL/4, 0]) {
+        rotate(180) octafrustum(ENR*2, ENL/2, ENR*2, WIW1/(WIA*ENR*2), 0, 0);
     }
     // propeller hub
-    translate([0, ENL/2+THIN*3/2, 0]) {
-        rotate([90, 0, 0]) cylinder(r=ENR/2, h=THIN, $fn=6, center=true);
+    translate([0, ENL/2+PHL/2, 0]) octafrustum(ENR, PHL, ENR, .5, 0, 0);
+    // propeller blades
+    for(i = [0, 1, 2]) rotate([0, 30+i*120, 0]) {
+        translate([PRR/2, ENL/2+THIN, 0]) {
+            rotate(-90) octafrustum(THIN, PRR, THIN*2, .5, 0, 0);
+        }
     }
 }
 
-module frustum(rw, fw, fx, le, rh, fh, fz) {
-    // a rectangular pyramid cut by a plane parallel to the base; base towards viewer;
-    // four of the edges are vertical; four of the faces are vertical;
-    // rw/rh = rear width/height; fw/fh = front width/height; le = length;
-    // fx, fz = front X/Z offset from centerline;
-    // note: X & Z centering is based on rear dimensions only
-    translate([-rw/2, -le/2, -rh/2]) polyhedron(
+module octafrustum(rw, l, rh, fs, fxo, fyo) {
+    // an octagonal frustum; base towards viewer;
+    // front and rear faces are vertical octagons;
+    // the other faces are eight trapezoids;
+    // args:
+    //     rw/rh   = rear width/height
+    //     l       = length
+    //     fs      = front/rear scale factor
+    //     fxo/fyo = front X/Y offset from centerline
+    // note: can't have different X/Z ratio for rear/front face
+    // because the side faces would no longer be planes
+    rx1 = rw/(2+2*sqrt(2));
+    fx1 = fs*rw/(2+2*sqrt(2));
+    rz1 = rh/(2+2*sqrt(2));
+    fz1 = fs*rh/(2+2*sqrt(2));
+    rx2 = rw/2;
+    fx2 = fs*rw/2;
+    rz2 = rh/2;
+    fz2 = fs*rh/2;
+    y   =  l/2;
+    polyhedron(
         [
-            [           0,  0,            0],
-            [          rw,  0,            0],
-            [(rw-fw)/2+fx, le, (rh-fh)/2+fz],
-            [(rw+fw)/2+fx, le, (rh-fh)/2+fz],
-            [           0,  0,           rh],
-            [          rw,  0,           rh],
-            [(rw-fw)/2+fx, le, (rh+fh)/2+fz],
-            [(rw+fw)/2+fx, le, (rh+fh)/2+fz],
+            // rear
+            [-rx2, -y, -rz1],
+            [-rx2, -y,  rz1],
+            [-rx1, -y,  rz2],
+            [ rx1, -y,  rz2],
+            [ rx2, -y,  rz1],
+            [ rx2, -y, -rz1],
+            [ rx1, -y, -rz2],
+            [-rx1, -y, -rz2],
+            // front
+            [fxo-fx2, y, fyo-fz1],
+            [fxo-fx2, y, fyo+fz1],
+            [fxo-fx1, y, fyo+fz2],
+            [fxo+fx1, y, fyo+fz2],
+            [fxo+fx2, y, fyo+fz1],
+            [fxo+fx2, y, fyo-fz1],
+            [fxo+fx1, y, fyo-fz2],
+            [fxo-fx1, y, fyo-fz2],
         ],
         [
-            [0, 1, 3, 2],
-            [0, 2, 6, 4],
-            [0, 4, 5, 1],
-            [1, 5, 7, 3],
-            [2, 3, 7, 6],
-            [4, 6, 7, 5],
+            [ 0,  1,  2,  3,  4,  5, 6, 7],  // rear
+            [15, 14, 13, 12, 11, 10, 9, 8],  // front
+            [ 0,  8,  9,  1],
+            [ 1,  9, 10,  2],
+            [ 2, 10, 11,  3],
+            [ 3, 11, 12,  4],
+            [ 4, 12, 13,  5],
+            [ 5, 13, 14,  6],
+            [ 6, 14, 15,  7],
+            [ 7, 15,  8,  0],
         ]
     );
 }
