@@ -1,15 +1,6 @@
 /*
 Heinkel He 111 from behind;
 scale: 1 unit = 9.2 mm (actual wingspan = 22.6 metres)
-Source:
-https://commons.wikimedia.org/wiki/File:Heinkel_He_111_H-1_3-view_line_drawing.svg
-Y=0 at middle of wings; Z=0 at centerline of thickest fuselage;
-Polyhedra conventions:
-    - sort vertices first by Z, then by Y, then by X
-    - within a face, start from the smallest vertex index
-    - sort faces first by first vertex etc.
-    - X=0 between X_min and X_max; same for Y, Z
-    - center of mass close to origin
 */
 
 /*
@@ -32,25 +23,41 @@ FUH4 = 120;
 FUL5 = 300;
 FUH5 =   0;
 
-// wings
-WIA  = 26/5;  // width/height ratio (must be uniform)
-WIL1 = 240;   // from root to centerline of engine
-WIW1 = FUL3;
-WIL2 = 940;   // from centerline of engine to tip
-WIW2 = 250;   // from leading to trailing edge at tip
+/*
+wings
+    "1" = inner, "2" = middle, "3" = outer
+    "length" = from root to tip
+    "width"  = from leading to trailing edge
+*/
+WIA  = 5;     // width/height ratio (must be uniform)
+WIXO = 1/4;   // horizontal offset of middle wing (of WIW2)
+WIYO = 1/8;   // vertical slope of middle & outer wings (of WIL2 & WIL3)
+WIL1 = 240; WIW1 = FUL3;
+WIL2 = 940; WIW2 = 250;
+WIL3 = 100; WIW3 = 100;
 
-// stabilisers
-STA   = 2/15;  // width/thickness ratio
-HSTL  =  860;  // horizontal - from tip to tip
-HSTW1 = FUL5;  // horizontal - from leading to trailing edge at root
-HSTW2 =  150;  // horizontal - from leading to trailing edge at tip
-VSTL  =  300;  // vertical - from centerline of fuselage to tip
-VSTW1 = FUL5;  // vertical - from leading to trailing edge at root
-VSTW2 =  150;  // vertical - from leading to trailing edge at tip
+/*
+stabilisers
+    "H" = horizontal, "V" = vertical
+    "length" = from root to tip
+    "width"  = from leading to trailing edge
+*/
+STAR  = 2/15;  // width/thickness ratio (must be uniform)
+HSTL1 =  280;
+HSTL2 =  140;
+VSTL1 =  200;
+VSTL2 =  100;
+STW1  = FUL5;
+HSTW2 =  250;
+VSTW2 =  200;
+HSTW3 =  120;
+VSTW3 =  100;
+HSTSL = 0.03;  // backwards slant (of STW1)
+VSTSL = 0.10;  // backwards slant (of STW1)
 
 // engines
 ENR  =  70;  // radius
-ENL  = 400;  // length
+ENL  = 360;  // length
 PRR  = 180;  // propeller radius
 PHL  =  50;  // propeller hub length
 
@@ -64,48 +71,54 @@ OTC = [.5, .8, .8];  // other parts
 // fuselage
 color(FUC) {
     // front
-    translate([0, (FUL1+FUL3)/2+FUL2, 0]) {
-        octafrustum(FUA*FUH2, FUL1, FUH2, FUH1/FUH2, 0, 0);
+    translate([0, FUL2+(FUL1+FUL3)/2, 0]) {
+        scale([FUA*FUH2, FUL1, FUH2]) frustum(FUH1/FUH2, 0, 0);
     }
     // mid-front
     translate([0, (FUL2+FUL3)/2, 0]) {
-        octafrustum(FUA*FUH3, FUL2, FUH3, FUH2/FUH3, 0, 0);
+        scale([FUA*FUH3, FUL2, FUH3]) frustum(FUH2/FUH3, 0, 0);
     }
     // mid
-    octafrustum(FUA*FUH3, FUL3, FUH3, 1, 0, 0);
+    scale([FUA*FUH3, FUL3, FUH3]) prism();
     // mid-rear
     translate([0, -(FUL3+FUL4)/2, 0]) {
-        rotate(180) octafrustum(FUA*FUH3, FUL4, FUH3, FUH4/FUH3, 0, 0);
+        rotate(180) scale([FUA*FUH3, FUL4, FUH3]) frustum(FUH4/FUH3, 0, 0);
     }
     // rear
-    translate([0, -(FUL3+FUL5)/2-FUL4, 0]) {
-        rotate(180) octafrustum(FUA*FUH4, FUL5, FUH4, 0, 0, 0);
+    translate([0, -FUL4-(FUL3+FUL5)/2, 0]) {
+        rotate(180) scale([FUA*FUH4, FUL5, FUH4]) frustum(FUH5/FUH4, 0, 0);
     }
 }
 
 // wings
 color(PLC) translate([0, 0, (WIW1/WIA-FUH3)/2]) for(x = [-1, 1]) {
-    // inner
+    // inner (straight)
     translate([x*(FBW3+WIL1)/2, 0, 0]) {
-        rotate(-x*90) octafrustum(WIW1, WIL1, WIW1/WIA, 1, 0, 0);
+        rotate(-x*90) scale([WIW1, WIL1, WIW1/WIA]) prism();
     }
-    // outer
+    // middle (horizontal & vertical slope)
     translate([x*((FBW3+WIL2)/2+WIL1), 0, 0]) {
-        rotate(-x*90) octafrustum(WIW1, WIL2, WIW1/WIA, WIW2/WIW1, x*60, 120);
+        rotate(-x*90) scale([WIW1, WIL2, WIW1/WIA]) {
+            frustum(WIW2/WIW1, x*WIXO*WIW2/WIW1, WIYO*WIL2*WIA/WIW1);
+        }
+    }
+    // outer (vertical slope)
+    translate([x*((FBW3+WIL3)/2+WIL1+WIL2), -WIXO*WIW2, WIYO*WIL2]) {
+        rotate(-x*90) scale([WIW2, WIL3, WIW2/WIA]) {
+            frustum(WIW3/WIW2, 0, WIYO*WIL3*WIA/WIW2);
+        }
     }
 }
 
 // stabilisers
 color(PLC) translate([0, -(FUL3+FUL5)/2-FUL4, 0]) {
     // horizontal
-    for(x = [-1, 1])  {
-        translate([x*HSTL/4, 0, 0]) rotate(-x*90) {
-            octafrustum(FUL5, HSTL/2, STA*FUL5, HSTW2/FUL5, x*40, 0);
-        }
+    for(x = [-1, 1]) translate([x*(HSTL1+HSTL2)/2, 0, 0]) rotate(-x*90) {
+        stabiliser(HSTL1, HSTL2, STW1, HSTW2, HSTW3, x*HSTSL);
     }
     // vertical
-    translate([0, 0, VSTL/2]) rotate([90, 0, -90]) {
-        octafrustum(FUL5, VSTL, STA*FUL5, VSTW2/FUL5, 20, 0);
+    translate([0, 0, (VSTL1+VSTL2)/2]) rotate([90, 0, -90]) {
+        stabiliser(VSTL1, VSTL2, STW1, VSTW2, VSTW3, VSTSL);
     }
 }
 
@@ -114,65 +127,124 @@ color(OTC) for(x = [-1, 1]) {
     translate([x*(FBW3/2+WIL1), FUL3/2, (WIW1/WIA-FUH3)/2]) engine();
 }
 
+module stabiliser(il, ol, iw, mw, ow, sl) {
+    /*
+    il/ol    = inner/outer length
+    iw/mw/ow = inner/middle/outer width
+    sl       = slant backwards
+    */
+    translate([0, -ol/2, 0]) {
+        scale([iw, il, STAR*iw]) frustum(mw/iw, sl*il/(il+ol), 0);  // inner
+    }
+    translate([sl*il/(il+ol)*iw, il/2, 0]) {
+        scale([mw, ol, STAR*mw]) frustum(ow/mw, sl*ol/(il+ol), 0);  // outer
+    }
+}
+
 module engine() {
     // front half
     translate([0, ENL/4, 0]) {
-        octafrustum(ENR*2, ENL/2, ENR*2, 1, 0, 0);
+        scale([ENR*2, ENL/2, ENR*2]) prism();
     }
     // rear half
-    translate([0, -ENL/4, 0]) {
-        rotate(180) octafrustum(ENR*2, ENL/2, ENR*2, WIW1/(WIA*ENR*2), 0, 0);
+    translate([0, -ENL/4, 0]) rotate(180) {
+        scale([ENR*2, ENL/2, ENR*2]) frustum(WIW1/(WIA*ENR*2), 0, 0);
     }
     // propeller hub
-    translate([0, ENL/2+PHL/2, 0]) octafrustum(ENR, PHL, ENR, .5, 0, 0);
+    translate([0, ENL/2+PHL/2, 0]) scale([ENR, PHL, ENR]) frustum(.5, 0, 0);
     // propeller blades
     for(i = [0, 1, 2]) rotate([0, 30+i*120, 0]) {
-        translate([PRR/2, ENL/2+THIN, 0]) {
-            rotate(-90) octafrustum(THIN, PRR, THIN*2, .5, 0, 0);
+        translate([PRR/2, ENL/2+THIN, 0]) rotate([0, 45, -90]) {
+            scale([THIN, PRR, THIN*2]) frustum(.5, 0, 0);
         }
     }
 }
 
-module octafrustum(rw, l, rh, fs, fxo, fyo) {
-    // an octagonal frustum; base towards viewer;
-    // front and rear faces are vertical octagons;
-    // the other faces are eight trapezoids;
-    // args:
-    //     rw/rh   = rear width/height
-    //     l       = length
-    //     fs      = front/rear scale factor
-    //     fxo/fyo = front X/Y offset from centerline
-    // note: can't have different X/Z ratio for rear/front face
-    // because the side faces would no longer be planes
-    rx1 = rw/(2+2*sqrt(2));
-    fx1 = fs*rw/(2+2*sqrt(2));
-    rz1 = rh/(2+2*sqrt(2));
-    fz1 = fs*rh/(2+2*sqrt(2));
-    rx2 = rw/2;
-    fx2 = fs*rw/2;
-    rz2 = rh/2;
-    fz2 = fs*rh/2;
-    y   =  l/2;
+module prism() {
+    /*
+    a right octagonal prism;
+    distance between any two parallel faces = 1;
+    centered at [0, 0, 0]; base towards viewer
+    */
+    a = 1/(2+2*sqrt(2));  // small
+    b = 1/2;              // big
     polyhedron(
         [
             // rear
-            [-rx2, -y, -rz1],
-            [-rx2, -y,  rz1],
-            [-rx1, -y,  rz2],
-            [ rx1, -y,  rz2],
-            [ rx2, -y,  rz1],
-            [ rx2, -y, -rz1],
-            [ rx1, -y, -rz2],
-            [-rx1, -y, -rz2],
+            [-b, -b, -a],
+            [-b, -b,  a],
+            [-a, -b,  b],
+            [ a, -b,  b],
+            [ b, -b,  a],
+            [ b, -b, -a],
+            [ a, -b, -b],
+            [-a, -b, -b],
             // front
-            [fxo-fx2, y, fyo-fz1],
-            [fxo-fx2, y, fyo+fz1],
-            [fxo-fx1, y, fyo+fz2],
-            [fxo+fx1, y, fyo+fz2],
-            [fxo+fx2, y, fyo+fz1],
-            [fxo+fx2, y, fyo-fz1],
-            [fxo+fx1, y, fyo-fz2],
-            [fxo-fx1, y, fyo-fz2],
+            [-b,  b, -a],
+            [-b,  b,  a],
+            [-a,  b,  b],
+            [ a,  b,  b],
+            [ b,  b,  a],
+            [ b,  b, -a],
+            [ a,  b, -b],
+            [-a,  b, -b],
+        ],
+        [
+            [ 0,  1,  2,  3,  4,  5, 6, 7],  // rear
+            [15, 14, 13, 12, 11, 10, 9, 8],  // front
+            [ 0,  8,  9,  1],
+            [ 1,  9, 10,  2],
+            [ 2, 10, 11,  3],
+            [ 3, 11, 12,  4],
+            [ 4, 12, 13,  5],
+            [ 5, 13, 14,  6],
+            [ 6, 14, 15,  7],
+            [ 7, 15,  8,  0],
+        ]
+    );
+}
+
+module frustum(fs, fx, fy) {
+    /*
+    a frustum of an octagonal pyramid;
+    centered at [0, 0, 0] (if fxo = fyo = 0);
+    base towards viewer;
+    front and rear faces: two vertical regular octagons
+    with width = height = Y distance = 1;
+    other faces: eight trapezoids;
+    same as the octagonal prism if fs=1 and fxo = fyo = 0;
+    args:
+        fs = front width & height scale factor
+        fx = front X offset from centerline
+        fy = front Y offset from centerline
+    note: front face must have same width/height ratio as rear face;
+    otherwise side faces would not be planes
+    */
+    ra =  1/(2+2*sqrt(2));  // rear  small
+    fa = fs/(2+2*sqrt(2));  // front small
+    y  =  1/2;
+    rb =  1/2;              // rear  big
+    fb = fs/2;              // front big
+    polyhedron(
+        [
+            // rear
+            [  -rb, -y,   -ra],
+            [  -rb, -y,    ra],
+            [  -ra, -y,    rb],
+            [   ra, -y,    rb],
+            [   rb, -y,    ra],
+            [   rb, -y,   -ra],
+            [   ra, -y,   -rb],
+            [  -ra, -y,   -rb],
+            // front
+            [fx-fb,  y, fy-fa],
+            [fx-fb,  y, fy+fa],
+            [fx-fa,  y, fy+fb],
+            [fx+fa,  y, fy+fb],
+            [fx+fb,  y, fy+fa],
+            [fx+fb,  y, fy-fa],
+            [fx+fa,  y, fy-fb],
+            [fx-fa,  y, fy-fb],
         ],
         [
             [ 0,  1,  2,  3,  4,  5, 6, 7],  // rear
