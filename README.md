@@ -22,3 +22,7 @@ File: tupolev-tb3.scad. Soviet heavy bomber. [Schematics](https://commons.wikime
 
 ## Hawker Hurricane
 File: hawker-hurricane.scad. British fighter. Under construction. [Schematics](https://commons.wikimedia.org/wiki/File:Hawker_Hurricane_3-view.svg) (Wikimedia Commons)
+
+![front view](hawker-hurricane-front.png)
+![left view](hawker-hurricane-left.png)
+![top view](hawker-hurricane-top.png)
