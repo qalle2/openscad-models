@@ -4,6 +4,8 @@ Tupolev TB-3 from behind;
 Y=0 at middle of wings; Z=0 at centerline of thickest fuselage
 */
 
+use <common.scad>
+
 /*
 Sections of fuselage from front to rear:
     1: "front":     front of frustum
@@ -80,19 +82,19 @@ translate([0, FUL2+FUL3+(FUL1+FUL4)/2, (FUH2-FUH4)/2]) {
     color(FUC) front_fuselage();
     // gun
     color(OTC) translate([0, GUL/2, (FUH2+THIN)/2]) {
-        scale([THIN, GUL, THIN]) octaprism();
+        scale([THIN, GUL, THIN]) oct_prism();
     }
 }
 // front-mid
 color(FUC) translate([0, FUL3+(FUL2+FUL4)/2, 0]) scale([FUW4, FUL2, FUH4]) {
-    sqfrustum(FUW2/FUW4, FUH2/FUH4, 0, (FUH2/FUH4-1)/2);
+    rect_frustum(FUW2/FUW4, FUH2/FUH4, 0, (FUH2/FUH4-1)/2);
 }
 // mid-front
 translate([0, (FUL4+FUL3)/2, 0]) {
     color(FUC) mid_front_fuselage();
     // windshield
     color(OTC) translate([0, THIN/2, (FUH4+THIN)/2]) {
-        scale([FUW4*2/3, THIN, THIN]) halfcube();
+        scale([FUW4*2/3, THIN, THIN]) half_cube();
     }
 }
 // mid
@@ -103,14 +105,14 @@ translate([0, -(FUL4+FUL5)/2, 0]) {
     // guns
     color(OTC) for(x = [-1, 1]) {
         translate([x*(FUW4/3+GUL/2), x*FUL5*3/10, (FUH4+THIN)/2]) {
-            rotate(90) scale([THIN, GUL, THIN]) octaprism();
+            rotate(90) scale([THIN, GUL, THIN]) oct_prism();
         }
     }
 }
 // rear-mid
 translate([0, -FUL5-(FUL4+FUL6)/2, 0]) color(FUC) {
     rotate(180) scale([FUW4, FUL6, FUH4]) {
-        sqfrustum(FUW7/FUW4, FUH7/FUH4, 0, (1-FUH7/FUH4)/2);
+        rect_frustum(FUW7/FUW4, FUH7/FUH4, 0, (1-FUH7/FUH4)/2);
     }
 }
 // rear
@@ -122,12 +124,12 @@ translate([0, -FUL5-FUL6-(FUL4+FUL7)/2, (FUH4-FUH7)/2]) {
 color(PLC) translate([0, 0, (WIW1/WIA-FUH4)/2]) for(x = [-1, 1]) {
     // inner
     translate([x*(FUW4+WIL1)/2, 0, 0]) {
-        scale([WIL1, WIW1, WIW1/WIA]) rotate(90) octaprism();
+        scale([WIL1, WIW1, WIW1/WIA]) rotate(90) oct_prism();
     }
     // outer
     translate([x*((FUW4+WIL2)/2+WIL1), 0, 0]) {
         rotate(-x*90) scale([WIW1, WIL2, WIW1/WIA]) {
-            octafrustum(WIW2/WIW1, 0, WTSL);
+            oct_frustum(WIW2/WIW1, 0, WTSL);
         }
     }
 }
@@ -137,14 +139,14 @@ color(PLC) translate([0, -FUL5-FUL6-(FUL4+FUL7)/2, (FUH4-FUH7)/2]) {
     for(x = [-1, 1])  {
         translate([x*(FUW7+HSTL)/2, 0, (FUH7-THIN)/2]) {
             rotate([0, -90+x*90, -x*90]) scale([FUL7, HSTL, THIN]) {
-                octafrustum(HSTW2/FUL7, 1/2-(HSTW2/2+20)/FUL7, 0);
+                oct_frustum(HSTW2/FUL7, 1/2-(HSTW2/2+20)/FUL7, 0);
             }
         }
     }
     // vertical
     translate([0, 0, (FUH7+VSTL)/2]) rotate([90, 0, -90]) {
         scale([FUL7, VSTL, THIN]) {
-            octafrustum(VSTW2/FUL7, 1/2-(VSTW2/2+20)/FUL7, 0);
+            oct_frustum(VSTW2/FUL7, 1/2-(VSTW2/2+20)/FUL7, 0);
         }
     }
 }
@@ -163,13 +165,13 @@ module front_fuselage() {
     scale([FUW2/3, FUL1/2, FUH2]) {
         // center
         translate([0, -1/2, -1/8]) cube([1, 1, 3/4], center=true);  // rear
-        translate([0,  1/2,    0]) rotate([0, 180, 0]) halfcube();  // front
+        translate([0,  1/2,    0]) rotate([0, 180, 0]) half_cube();  // front
         // left/right
         for(x = [-1, 1]) translate([x, 0, 0]) {
             // rear
-            translate([0, -1/2, 0]) rotate([0, 135-x*45, 0]) fivesixthscube();
+            translate([0, -1/2, 0]) rotate([0, 135-x*45, 0]) five_sixths_cube();
             // front
-            translate([0,  1/2, 0]) rotate([0, 135-x*45, 0]) sixthcube();
+            translate([0,  1/2, 0]) rotate([0, 135-x*45, 0]) sixth_cube();
         }
     }
 }
@@ -213,17 +215,17 @@ module engine() {
     translate([0, -ENL/4, 0]) cube([ENW, ENL/2, ENH], center=true);
     // front
     translate([0, ENL/4, 0]) {
-        scale([ENW, ENL/2, ENH]) sqfrustum(1, 1/2, 0, 1/4);
+        scale([ENW, ENL/2, ENH]) rect_frustum(1, 1/2, 0, 1/4);
     }
     // propeller hub
     translate([0, ENL/2+PHL/2, PHR]) {
-        scale([PHR*2, PHL, PHR*2]) octafrustum(1/2, 0, 0);
+        scale([PHR*2, PHL, PHR*2]) right_oct_frustum(1/2);
     }
     // propeller blades
     translate([0, (ENL+PHL)/2, PHR]) for(x = [0, 1]) {
         rotate([0, 30+x*180, 0])
             translate([PBL/2, 0, 0])
-            rotate([0,45,-90]) scale([PBT, PBL, PBW]) octafrustum(1/2, 0, 0);
+            rotate([0,45,-90]) scale([PBT, PBL, PBW]) right_oct_frustum(1/2);
     }
 }
 
@@ -236,204 +238,7 @@ module landing_gear() {
         cube([THIN, GEL, THIN], center=true);
         // wheels
         translate([THIN, 0, 0]) for(x = [-1, 1]) translate([0, x*GEL/2, 0]) {
-            rotate(x*90) scale([WHR*2, THIN, WHR*2]) octaprism();
+            rotate(x*90) scale([WHR*2, THIN, WHR*2]) oct_prism();
         }
     }
-}
-
-module sixthcube() {
-    // a unit cube but 5/6 sliced away from top front right along 3 vertices
-    translate([-1/2, -1/2, -1/2]) polyhedron(
-        [
-            [0, 0, 0],
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-        ],
-        [
-            [0, 1, 2],
-            [0, 2, 3],
-            [0, 3, 1],
-            [1, 3, 2],
-        ]
-    );
-}
-
-module halfcube() {
-    // a unit cube but 1/2 sliced away from top front along 4 vertices
-    translate([-1/2, -1/2, -1/2]) polyhedron(
-        [
-            [0, 0, 0],
-            [1, 0, 0],
-            [0, 1, 0],
-            [1, 1, 0],
-            [0, 0, 1],
-            [1, 0, 1],
-        ],
-        [
-            [0, 1, 3, 2],
-            [0, 2, 4],
-            [0, 4, 5, 1],
-            [1, 5, 3],
-            [2, 3, 5, 4],
-        ]
-    );
-}
-
-module fivesixthscube() {
-    // a unit cube but 1/6 sliced away from top front right along 3 vertices
-    translate([-1/2, -1/2, -1/2]) polyhedron(
-        [
-            [0, 0, 0],
-            [1, 0, 0],
-            [0, 1, 0],
-            [1, 1, 0],
-            [0, 0, 1],
-            [1, 0, 1],
-            [0, 1, 1],
-        ],
-        [
-            [0, 1, 3, 2],
-            [0, 2, 6, 4],
-            [0, 4, 5, 1],
-            [1, 5, 3],
-            [2, 3, 6],
-            [3, 5, 6],
-            [4, 6, 5],
-        ]
-    );
-}
-
-module sqfrustum(fw, fh, fx, fz) {
-    /*
-    a rectangular pyramid cut by a plane parallel to the base;
-    base towards viewer; four of the faces are vertical;
-    rear width = rear height = length = 1;
-    fw/fh = front width/height;
-    fx/fz = front X/Z offset from centerline;
-    note: X & Z centering is based on rear face only
-    */
-    polyhedron(
-        [
-            // rear
-            [   -1/2, -1/2,    -1/2],
-            [   -1/2, -1/2,     1/2],
-            [    1/2, -1/2,     1/2],
-            [    1/2, -1/2,    -1/2],
-            // front
-            [fx-fw/2,  1/2, fz-fh/2],
-            [fx-fw/2,  1/2, fz+fh/2],
-            [fx+fw/2,  1/2, fz+fh/2],
-            [fx+fw/2,  1/2, fz-fh/2],
-        ],
-        [
-            [0, 1, 2, 3],
-            [0, 4, 5, 1],
-            [1, 5, 6, 2],
-            [2, 6, 7, 3],
-            [3, 7, 4, 0],
-            [4, 7, 6, 5],
-        ]
-    );
-}
-
-module octaprism() {
-    /*
-    a right octagonal prism;
-    distance between any two parallel faces = 1;
-    centered at [0, 0, 0]; base towards viewer
-    */
-    a = 1/(2+2*sqrt(2));  // small
-    b = 1/2;              // big
-    polyhedron(
-        [
-            // rear
-            [-b, -b, -a],
-            [-b, -b,  a],
-            [-a, -b,  b],
-            [ a, -b,  b],
-            [ b, -b,  a],
-            [ b, -b, -a],
-            [ a, -b, -b],
-            [-a, -b, -b],
-            // front
-            [-b,  b, -a],
-            [-b,  b,  a],
-            [-a,  b,  b],
-            [ a,  b,  b],
-            [ b,  b,  a],
-            [ b,  b, -a],
-            [ a,  b, -b],
-            [-a,  b, -b],
-        ],
-        [
-            [ 0,  1,  2,  3,  4,  5, 6, 7],
-            [15, 14, 13, 12, 11, 10, 9, 8],
-            [ 0,  8,  9,  1],
-            [ 1,  9, 10,  2],
-            [ 2, 10, 11,  3],
-            [ 3, 11, 12,  4],
-            [ 4, 12, 13,  5],
-            [ 5, 13, 14,  6],
-            [ 6, 14, 15,  7],
-            [ 7, 15,  8,  0],
-        ]
-    );
-}
-
-module octafrustum(fs, fx, fy) {
-    /*
-    a frustum of an octagonal pyramid;
-    centered at [0, 0, 0] (if fxo = fyo = 0);
-    base towards viewer;
-    front and rear faces: two vertical regular octagons
-    with width = height = Y distance = 1;
-    other faces: eight trapezoids;
-    same as the octagonal prism if fs=1 and fxo = fyo = 0;
-    args:
-        fs = front width & height scale factor
-        fx = front X offset from centerline
-        fy = front Y offset from centerline
-    note: front face must have same width/height ratio as rear face;
-    otherwise side faces would not be planes
-    */
-    ra =  1/(2+2*sqrt(2));  // rear  small
-    fa = fs/(2+2*sqrt(2));  // front small
-    y  =  1/2;
-    rb =  1/2;              // rear  big
-    fb = fs/2;              // front big
-    polyhedron(
-        [
-            // rear
-            [  -rb, -y,   -ra],
-            [  -rb, -y,    ra],
-            [  -ra, -y,    rb],
-            [   ra, -y,    rb],
-            [   rb, -y,    ra],
-            [   rb, -y,   -ra],
-            [   ra, -y,   -rb],
-            [  -ra, -y,   -rb],
-            // front
-            [fx-fb,  y, fy-fa],
-            [fx-fb,  y, fy+fa],
-            [fx-fa,  y, fy+fb],
-            [fx+fa,  y, fy+fb],
-            [fx+fb,  y, fy+fa],
-            [fx+fb,  y, fy-fa],
-            [fx+fa,  y, fy-fb],
-            [fx-fa,  y, fy-fb],
-        ],
-        [
-            [ 0,  1,  2,  3,  4,  5, 6, 7],
-            [15, 14, 13, 12, 11, 10, 9, 8],
-            [ 0,  8,  9,  1],
-            [ 1,  9, 10,  2],
-            [ 2, 10, 11,  3],
-            [ 3, 11, 12,  4],
-            [ 4, 12, 13,  5],
-            [ 5, 13, 14,  6],
-            [ 6, 14, 15,  7],
-            [ 7, 15,  8,  0],
-        ]
-    );
 }
