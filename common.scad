@@ -333,14 +333,114 @@ module oct_frustum(fs, fx, fz) {
     );
 }
 
+module oct_to_edge(fw) {
+    /*
+    a transition between a regular octagon (rear)
+    and a horizontal edge (front);
+    max width = max length = max height = 1;
+    centred at [0, 0, 0];
+    faces:
+        1 regular octagon (vertical, rear)
+        2 trapezoids
+        6 isosceles triangles
+    */
+    a =  1/(2+2*sqrt(2));  // small
+    b =  1/2;              // big
+    f = fw/2;
+    polyhedron(
+        [
+            // rear
+            [-b, -b, -a],
+            [-b, -b,  a],
+            [-a, -b,  b],
+            [ a, -b,  b],
+            [ b, -b,  a],
+            [ b, -b, -a],
+            [ a, -b, -b],
+            [-a, -b, -b],
+            // front
+            [-f,  b,  0],
+            [ f,  b,  0],
+        ],
+        [
+            [0, 1, 2, 3, 4, 5, 6, 7],
+            [0, 8, 1],
+            [1, 8, 2],
+            [2, 8, 9, 3],
+            [3, 9, 4],
+            [4, 9, 5],
+            [5, 9, 6],
+            [6, 9, 8, 7],
+            [0, 7, 8],
+        ]
+    );
+}
+
+module oct_to_rect(fw, fh) {
+    /*
+    a transition between an octagon and a rectangle;
+    max width = max length = max height = 1;
+    centred at [0, 0, 0];
+    faces:
+        1 regular octagon (vertical, rear)
+        1 rectangle       (vertical, front)
+        4 trapezoids
+        4 isosceles triangles
+    args:
+        fw = front width
+        fh = front height
+    faces:
+        1 regular octagon (rear)
+        2 trapezoids
+        6 isosceles triangles
+    */
+    ra =  1/(2+2*sqrt(2));  // rear small
+    rb =  1/2;              // rear big
+    y  =  1/2;
+    fx = fw/2;
+    fz = fh/2;
+    polyhedron(
+        [
+            // rear
+            [-rb, -y, -ra],
+            [-rb, -y,  ra],
+            [-ra, -y,  rb],
+            [ ra, -y,  rb],
+            [ rb, -y,  ra],
+            [ rb, -y, -ra],
+            [ ra, -y, -rb],
+            [-ra, -y, -rb],
+            // front
+            [-fx, y, -fz],
+            [-fx, y,  fz],
+            [ fx, y,  fz],
+            [ fx, y, -fz],
+        ],
+        [
+            [0, 1, 2, 3, 4, 5, 6, 7],
+            [8, 11, 10, 9],
+            [0, 8, 9, 1],
+            [1, 9, 2],
+            [2, 9, 10, 3],
+            [3, 10, 4],
+            [4, 10, 11, 5],
+            [5, 11, 6],
+            [6, 11, 8, 7],
+            [7, 8, 0],
+        ]
+    );
+}
+
 // demo
 scale(100) {
-    translate([-7, 0, 0]) sixth_cube();
-    translate([-5, 0, 0]) half_cube();
-    translate([-3, 0, 0]) five_sixths_cube();
-    translate([-1, 0, 0]) right_rect_frustum(1/2, 1/3);
-    translate([ 1, 0, 0]) rect_frustum(1/2, 1/3, 1/6, 1/6);
-    translate([ 3, 0, 0]) oct_prism();
-    translate([ 5, 0, 0]) right_oct_frustum(1/2);
-    translate([ 7, 0, 0]) oct_frustum(1/2, 1/6, 1/6);
+    translate([-9, 0, 0]) sixth_cube();
+    translate([-7, 0, 0]) half_cube();
+    translate([-5, 0, 0]) five_sixths_cube();
+    translate([-3, 0, 0]) right_rect_frustum(1/2, 1/3);
+    translate([-1, 0, 0]) rect_frustum(1/2, 1/3, 1/6, 1/6);
+    translate([ 1, 0, 0]) oct_prism();
+    translate([ 3, 0, 0]) right_oct_frustum(1/2);
+    translate([ 5, 0, 0]) oct_frustum(1/2, 1/6, 1/6);
+    translate([ 7, 0, 0]) oct_to_edge(1/4);
+    translate([ 9, 0, 0]) oct_to_rect(1/4, 1/6);
 }
