@@ -76,17 +76,17 @@ OTC = [.5, .8, .8];  // other parts
 color(FUC) {
     // front
     translate([0, (FUL1+FUL2)/2, 0]) {
-        scale([FUW2, FUL1, FUH2]) right_oct_frustum(FUH1/FUH2);
+        scale([FUW2, FUL1, FUH2]) oct_frustum(FUH1/FUH2);
     }
     // mid-front
-    scale([FUW2, FUL2, FUH2]) oct_prism();
+    scale([FUW2, FUL2, FUH2]) oct_frustum();
     // mid-rear
     translate([0, -(FUL2+FUL3)/2, 0]) rotate(180) {
         scale([FUW2, FUL3, FUH2]) oct_frustum(FUH3/FUH2, 0, FUE3);
     }
     // rear
     translate([0, -FUL3-(FUL2+FUL4)/2, FUE3*FUH2]) {
-        scale([FUW3, FUL4, FUH3]) rotate(180) oct_to_rect(THIN/FUW3, 1);
+        scale([FUW3, FUL4, FUH3]) rotate(180) square_cupola(THIN/FUW3, 1);
     }
 }
 
@@ -119,7 +119,7 @@ translate([0, 0, (FUH2+COH)/2]) {
 color(PLC) for(x = [-1, 1]) {
     // inner
     translate([x*(WIL1+FBW2)/2, 0, (WIH1-FUH2)/2]) rotate(-x*90) {
-        scale([WIW1, WIL1, WIH1]) oct_prism();
+        scale([WIW1, WIL1, WIH1]) oct_frustum();
     }
     // outer
     translate([x*(WIL1+(WIL2+FBW2)/2), 0, (WIH1-FUH2)/2]) rotate(-x*90) {
@@ -146,10 +146,10 @@ color(PLC) translate([0, -FUL3-FUL4-FUL2/2-RUL/2, VSTL/2+FUE3*FUH2]) {
 
 color(OTC) translate([0, FUL1+(FUL2+PHL)/2, 0]) {
     // propeller hub
-    scale([PHR*2, PHL, PHR*2]) right_oct_frustum(1/2);
+    scale([PHR*2, PHL, PHR*2]) oct_frustum(1/2);
     // propeller blades
     for(x = [0, 1]) rotate([0, 30-x*180, 0]) {
-    translate([PBL/2, 0, 0]) rotate([0,30,-90]) scale([PBT, PBL, PBW]) right_oct_frustum(1/2);
+    translate([PBL/2, 0, 0]) rotate([0,30,-90]) scale([PBT, PBL, PBW]) oct_frustum(1/2);
     }
 }
 

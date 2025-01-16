@@ -74,21 +74,21 @@ OTC = [.5, .8, .8];  // other parts
 color(FUC) {
     // front
     translate([0, FUL2+(FUL1+FUL3)/2, 0]) {
-        scale([FUA*FUH2, FUL1, FUH2]) right_oct_frustum(FUH1/FUH2);
+        scale([FUA*FUH2, FUL1, FUH2]) oct_frustum(FUH1/FUH2);
     }
     // mid-front
     translate([0, (FUL2+FUL3)/2, 0]) {
-        scale([FUA*FUH3, FUL2, FUH3]) right_oct_frustum(FUH2/FUH3);
+        scale([FUA*FUH3, FUL2, FUH3]) oct_frustum(FUH2/FUH3);
     }
     // mid
-    scale([FUA*FUH3, FUL3, FUH3]) oct_prism();
+    scale([FUA*FUH3, FUL3, FUH3]) oct_frustum();
     // mid-rear
     translate([0, -(FUL3+FUL4)/2, 0]) {
-        rotate(180) scale([FUA*FUH3, FUL4, FUH3]) right_oct_frustum(FUH4/FUH3);
+        rotate(180) scale([FUA*FUH3, FUL4, FUH3]) oct_frustum(FUH4/FUH3);
     }
     // rear
     translate([0, -FUL4-(FUL3+FUL5)/2, 0]) {
-        rotate(180) scale([FUA*FUH4, FUL5, FUH4]) right_oct_frustum(FUH5/FUH4);
+        rotate(180) scale([FUA*FUH4, FUL5, FUH4]) oct_frustum(FUH5/FUH4);
     }
 }
 
@@ -96,7 +96,7 @@ color(FUC) {
 color(PLC) translate([0, 0, (WIW1/WIA-FUH3)/2]) for(x = [-1, 1]) {
     // inner (straight)
     translate([x*(FBW3+WIL1)/2, 0, 0]) {
-        rotate(-x*90) scale([WIW1, WIL1, WIW1/WIA]) oct_prism();
+        rotate(-x*90) scale([WIW1, WIL1, WIW1/WIA]) oct_frustum();
     }
     // middle (horizontal & vertical slope)
     translate([x*((FBW3+WIL2)/2+WIL1), 0, 0]) {
@@ -146,18 +146,18 @@ module stabiliser(il, ol, iw, mw, ow, sl) {
 module engine() {
     // front half
     translate([0, ENL/4, 0]) {
-        scale([ENR*2, ENL/2, ENR*2]) oct_prism();
+        scale([ENR*2, ENL/2, ENR*2]) oct_frustum();
     }
     // rear half
     translate([0, -ENL/4, 0]) rotate(180) {
-        scale([ENR*2, ENL/2, ENR*2]) right_oct_frustum(WIW1/(WIA*ENR*2));
+        scale([ENR*2, ENL/2, ENR*2]) oct_frustum(WIW1/(WIA*ENR*2));
     }
     // propeller hub
-    translate([0, ENL/2+PHL/2, 0]) scale([ENR, PHL, ENR]) right_oct_frustum(1/2);
+    translate([0, ENL/2+PHL/2, 0]) scale([ENR, PHL, ENR]) oct_frustum(1/2);
     // propeller blades
     for(i = [0, 1, 2]) rotate([0, 30+i*120, 0]) {
         translate([PRR/2, ENL/2+THIN, 0]) rotate([0, 45, -90]) {
-            scale([THIN, PRR, THIN*2]) right_oct_frustum(1/2);
+            scale([THIN, PRR, THIN*2]) oct_frustum(1/2);
         }
     }
 }
