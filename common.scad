@@ -4,6 +4,108 @@ Max width = max length = max height = 1.
 All shapes are centred at [0, 0, 0].
 */
 
+module tetrahedron(fx=0, fz=0) {
+    /*
+    not regular;
+    bottom towards viewer;
+    faces:
+        4 triangles
+    args:
+        fx, fz = front X/Z offset
+    */
+    a = 1/2;
+    polyhedron(
+        [
+            // rear
+            [-a, -a, -a],
+            [ 0, -a,  a],
+            [ a, -a, -a],
+            // front
+            [fx,  a, fz],
+        ],
+        [
+            [0, 1, 2],
+            [0, 2, 3],
+            [0, 3, 1],
+            [1, 3, 2],
+        ]
+    );
+}
+
+module tri_wedge(fw=1, fx=0, fz=0) {
+    /*
+    triangular wedge;
+    faces:
+        4 triangles (1 of them vertical and rear)
+        1 trapezoid
+    the front is a horizontal edge;
+    args:
+        fw     = front edge width
+        fx, fz = front X/Z offset from centerline
+    */
+    a =  1/2;
+    f = fw/2;
+    polyhedron(
+        [
+            // rear
+            [-a, -a, -a],
+            [ 0, -a,  a],
+            [ a, -a, -a],
+            // front
+            [fx-f,  a, fz],
+            [fx+f,  a, fz],
+        ],
+        [
+            [0, 1, 2],
+            [0, 3, 1],
+            [1, 3, 4],
+            [1, 4, 2],
+            [2, 4, 3],
+            [2, 3, 0],
+        ]
+    );
+}
+
+module tri_frustum(fs=1, fx=0, fz=0) {
+    /*
+    a frustum of a tetrahedron;
+    (a triangular pyramid cut by a plane parallel to the base);
+    base towards viewer;
+    X & Z centering is based on rear face only;
+    faces:
+        2 triangles (vertical; front and rear)
+        3 trapezoids
+    args:
+        fs     = front width/height scale factor
+        fx, fz = front X/Z offset from centerline
+    note: front face must have same width/height ratio as rear face;
+    otherwise side faces would not be planes;
+    note: default settings = triangular prism
+    */
+    a =  1/2;
+    f = fs/2;
+    polyhedron(
+        [
+            // rear
+            [  -a, -a,   -a],
+            [   0, -a,    a],
+            [   a, -a,   -a],
+            // front
+            [fx-f,  a, fz-f],
+            [fx,    a, fz+f],
+            [fx+f,  a, fz-f],
+        ],
+        [
+            [0, 1, 2],
+            [3, 5, 4],
+            [0, 3, 4, 1],
+            [1, 4, 5, 2],
+            [2, 5, 3, 0],
+
+        ]
+    );
+}
+
 module sixth_cube() {
     /*
     like a cube but 5/6 sliced away from top front right along 3 vertices;
@@ -24,34 +126,6 @@ module sixth_cube() {
             [0, 2, 3],
             [0, 3, 1],
             [1, 3, 2],
-        ]
-    );
-}
-
-module half_cube() {
-    /*
-    like a cube but 1/2 sliced away from top front along 4 vertices;
-    faces:
-        2 squares                   (bottom, rear)
-        1 rectangle                 (top front)
-        2 isosceles right triangles (left, right)
-    */
-    a = 1/2;
-    polyhedron(
-        [
-            [-a, -a, -a],
-            [ a, -a, -a],
-            [-a,  a, -a],
-            [ a,  a, -a],
-            [-a, -a,  a],
-            [ a, -a,  a],
-        ],
-        [
-            [0, 1, 3, 2],
-            [0, 2, 4],
-            [0, 4, 5, 1],
-            [1, 5, 3],
-            [2, 3, 5, 4],
         ]
     );
 }
@@ -124,6 +198,7 @@ module wedge(fw=1, fx=0, fz=0) {
         2 triangles
     the front is a horizontal edge;
     args:
+        fw     = front edge width
         fx, fz = front X/Z offset from centerline
     */
     a =  1/2;
@@ -374,15 +449,18 @@ module oct_frustum(fs=1, fx=0, fz=0) {
 
 // demo
 scale(100) {
-    translate([-5, 0,  1]) sixth_cube();
-    translate([-3, 0,  1]) half_cube();
-    translate([-1, 0,  1]) five_sixths_cube();
-    translate([ 1, 0,  1]) square_pyramid(1/4, 1/4);
-    translate([ 3, 0,  1]) wedge(1/2, 1/8, 1/4);
-    translate([ 5, 0,  1]) rect_frustum(1/2, 1/3, 1/6, 1/6);
+    translate([ 0, 0,  2]) tetrahedron(1/4, 1/4);
+    translate([ 2, 0,  2]) tri_wedge(1/2, 1/8, 1/4);
+    translate([ 4, 0,  2]) tri_frustum(1/2, 1/6, 1/6);
 
-    translate([-3, 0, -1]) oct_pyramid(1/4, 1/4);
-    translate([-1, 0, -1]) oct_wedge(1/4, 1/6, 1/6);
-    translate([ 1, 0, -1]) square_cupola(1/3, 1/4, 1/8, 1/8);
-    translate([ 3, 0, -1]) oct_frustum(1/2, 1/6, 1/6);
+    translate([-4, 0,  0]) sixth_cube();
+    translate([-2, 0,  0]) five_sixths_cube();
+    translate([ 0, 0,  0]) square_pyramid(1/4, 1/4);
+    translate([ 2, 0,  0]) wedge(1/2, 1/8, 1/4);
+    translate([ 4, 0,  0]) rect_frustum(1/2, 1/3, 1/6, 1/6);
+
+    translate([ 0, 0, -2]) oct_pyramid(1/4, 1/4);
+    translate([ 2, 0, -2]) oct_wedge(1/4, 1/6, 1/6);
+    translate([ 4, 0, -2]) square_cupola(1/3, 1/4, 1/8, 1/8);
+    translate([ 6, 0, -2]) oct_frustum(1/2, 1/6, 1/6);
 }

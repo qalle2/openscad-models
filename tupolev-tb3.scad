@@ -94,7 +94,7 @@ translate([0, (FUL4+FUL3)/2, 0]) {
     color(FUC) mid_front_fuselage();
     // windshield
     color(OTC) translate([0, THIN/2, (FUH4+THIN)/2]) {
-        scale([FUW4*2/3, THIN, THIN]) half_cube();
+        scale([FUW4*2/3, THIN, THIN]) wedge(1, 0, -.5);
     }
 }
 // mid
@@ -165,7 +165,7 @@ module front_fuselage() {
     scale([FUW2/3, FUL1/2, FUH2]) {
         // center
         translate([0, -1/2, -1/8]) cube([1, 1, 3/4], center=true);  // rear
-        translate([0,  1/2,    0]) rotate([0, 180, 0]) half_cube();  // front
+        translate([0,  1/2,    0]) rotate([0, 180, 0]) wedge(1, 0, -.5);  // front
         // left/right
         for(x = [-1, 1]) translate([x, 0, 0]) {
             // rear
