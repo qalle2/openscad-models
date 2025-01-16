@@ -116,15 +116,15 @@ module square_pyramid(fx=0, fz=0) {
     );
 }
 
-module square_to_edge(fw=1, fx=0, fz=0) {
+module wedge(fw=1, fx=0, fz=0) {
     /*
     faces:
         1 square (vertical, rear)
         2 trapezoids
         2 triangles
+    the front is a horizontal edge;
     args:
         fx, fz = front X/Z offset from centerline
-    TODO: what's the name for this?
     */
     a =  1/2;
     f = fw/2;
@@ -225,14 +225,13 @@ module oct_pyramid(fx, fz) {
     );
 }
 
-module oct_to_edge(fw=1, fx=0, fz=0) {
+module oct_wedge(fw=1, fx=0, fz=0) {
     /*
-    a transition between a regular octagon (rear) and a horizontal edge (front);
-    TODO: what's the actual name?;
     faces:
         1 regular octagon (vertical, rear)
         2 trapezoids
         6 isosceles triangles
+    the front is a horizontal edge;
     args:
         fw     = front edge width
         fx, fz = front X/Z offset from centerline
@@ -326,9 +325,8 @@ module oct_frustum(fs=1, fx=0, fz=0) {
         2 regular octagons (vertical; front and rear)
         8 trapezoids
     args:
-        fs = front width & height scale factor
-        fx = front X offset from centreline
-        fz = front Z offset from centreline
+        fs     = front width & height scale factor
+        fx, fz = front X/Z offset from centreline
     note: front face must have same width/height ratio as rear face;
     otherwise side faces would not be planes;
     note: default settings = octagonal prism
@@ -380,11 +378,11 @@ scale(100) {
     translate([-3, 0,  1]) half_cube();
     translate([-1, 0,  1]) five_sixths_cube();
     translate([ 1, 0,  1]) square_pyramid(1/4, 1/4);
-    translate([ 3, 0,  1]) square_to_edge(1/2, 1/8, 1/4);
+    translate([ 3, 0,  1]) wedge(1/2, 1/8, 1/4);
     translate([ 5, 0,  1]) rect_frustum(1/2, 1/3, 1/6, 1/6);
 
     translate([-3, 0, -1]) oct_pyramid(1/4, 1/4);
-    translate([-1, 0, -1]) oct_to_edge(1/4, 1/6, 1/6);
+    translate([-1, 0, -1]) oct_wedge(1/4, 1/6, 1/6);
     translate([ 1, 0, -1]) square_cupola(1/3, 1/4, 1/8, 1/8);
     translate([ 3, 0, -1]) oct_frustum(1/2, 1/6, 1/6);
 }
