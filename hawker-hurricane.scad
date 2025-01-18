@@ -1,5 +1,5 @@
 /* Hawker Hurricane;
-Y=0 at the middle of the fuselage */
+every module is centered at [0, 0, 0] */
 
 use <common.scad>
 
@@ -25,16 +25,16 @@ FUW4 = 20;
 FBW2 = FUW2/(1+sqrt(2));  // width of flat bottom and top
 FUE3 = -1/10;  // elevation (of FUH2)
 
-// wings ("length"=root to tip)
-WIL1 = 180;
-WIW1 = 380;
-WIH1 = 70;
-WIL2 = 620;
-WIW2 = 190;  // between mid and outer wing
-WIH2 = 20;
+// wings (W=width=X, L=length=Y, T=thickness=Z, 1-3=inner to outer)
+WIW1 = 180;
+WIL1 = 380;
+WIT1 = 70;
+WIW2 = 620;
+WIL2 = 190;
+WIT2 = 20;
+WIW3 = 80;
 WIL3 = 80;
-WIW3 = 80;   // width at tip
-WIE2 = 35;   // elevation between mid and outer wing
+WIEL = 35;   // elevation between mid and outer wing
 
 /*
 cockpit; parts:
@@ -50,33 +50,36 @@ COL3 =   60;
 COL4 =  200;
 COH  =   40;
 
-// horizontal stabilisers (length = from root to tip)
-HSTL1 =  190;  // length 1
-HSTW1 = FUL4;  // width 1
-HSTT1 =   30;  // thickness 1
-HSTL2 =   60;
-HSTW2 =  130;
+// horizontal stabilisers (W=width=X, L=length=Y, T=thickness=Z)
+HSTW1 =  190;
+HSTL1 = FUL4;
+HSTT1 =   30;
+HSTW2 =   60;
+HSTL2 =  130;
 HSTT2 =   10;
-HSTW3 =   60;
+HSTL3 =   60;
 HSTSL =   15;  // horizontal slant from centerline
 
-// vertical stabilisers and rudder (length = from root to tip)
-VSTL1 = 125;       // vertical   - length of thick (lower) part
-VSTL2 =  45;       // vertical   - length of thin  (upper) part
-VSTW1 = FUL4*2/5;  // vertical - width of front part
-VSTW2 = FUL4*2/5;  // vertical - width of mid part
-VSTW3 = FUL4-VSTW1-VSTW2;  // vertical - width of rear part
-RUL   =  80;       // rudder length (front to rear)
-RUH1  = FUH3+VSTL1+VSTL2;  // rudder height 1 (front)
-RUH2  = FUH3+VSTL1-VSTL2;  // rudder height 2 (rear)
+// vertical stabiliser (L=length=Y, H=height=Z, T=thickness=X)
+VSTL1 = FUL4*2/5;          // front part
+VSTL2 = FUL4*2/5;          // mid part
+VSTL3 = FUL4-VSTL1-VSTL2;  // rear part
+VSTH1 = 125;               // thick (lower) part
+VSTH2 =  45;               // thin  (upper) part
+VSTT  = FUW4;
 
-PHR = FUW1/2;  // propeller hub radius
-PHL =  50;     // propeller hub length
-PBL = 240;     // propeller blade length
-PBW =  35;     // propeller blade width
-PBT =  20;     // propeller blade thickness
+// rudder (L=length=Y, H=height=Z, T=thickness=X)
+RUL  =  80;               // length
+RUH1 = FUH3+VSTH1+VSTH2;  // height 1 (front)
+RUH2 = FUH3+VSTH1-VSTH2;  // height 2 (rear)
+RUT  = FUW4;
 
-THIN = 20;  // thickness of many thin objects
+// propeller
+PHR = FUW1/2;  // hub radius
+PHL =  50;     // hub length
+PBL = 240;     // blade length
+PBW =  35;     // blade width
+PBT =  20;     // blade thickness
 
 // colors
 FUC = [.8, .5, .5];  // fuselage
@@ -89,7 +92,7 @@ module hurricane() {
     color(FUC) translate([0, 0, 0]) fuselage();
     // front half of cockpit
     color(OTC) translate([0, COL3+(-FUL1-FUL2+FUL3+FUL4+COL1+COL2)/2, (FUH2+COH)/2]) {
-        cockpit_fronthalf();
+        cockpit_fronthalf(COW, COL1, COL2, COH);
     }
     // rear half of cockpit
     color(FUC) translate([0, (-FUL1-FUL2+FUL3+FUL4+COL3-COL4)/2, (FUH2+COH)/2]) {
@@ -97,30 +100,28 @@ module hurricane() {
     }
     // wings
     color(PLC) for(x = [-1, 1]) {
-        translate([x*(WIL1+WIL2+WIL3+FBW2)/2, (-FUL1+FUL3+FUL4)/2, (WIH1-FUH2)/2]) {
-            rotate(-x*90) wing(WIL1, WIL2, WIL3, WIW1, WIW2, WIW3, WIH1, WIH2, WIE2);
+        translate([x*(WIW1+WIW2+WIW3+FBW2)/2, (-FUL1+FUL3+FUL4)/2, (WIT1-FUH2)/2]) {
+            rotate(-x*90) wing(WIW1, WIW2, WIW3, WIL1, WIL2, WIL3, WIT1, WIT2, WIEL);
         }
     }
     // stabilisers and rudder
-    color(PLC) {
-        translate([0, (-FUL1-FUL2-FUL3)/2, FUE3*FUH2]) {
-            // horizontal stabilisers
-            for(x = [-1, 1]) translate([x*(FUW4+HSTL1+HSTL2)/2, 0, 0]) {
-                rotate(-x*90) horizontal_stabiliser(x);
-            }
-            // vertical stabiliser
-            translate([0, 0, FUH3/2+(VSTL1+VSTL2)/2]) {
-                vertical_stabiliser(FUW4, VSTW3, VSTW2, VSTW1, VSTL1, VSTL2);
-            }
-            // rudder
-            translate([0, (-FUL4-RUL)/2, (RUH1-FUH3)/2]) {
-                rotate(180) rudder(FUW4, RUL, RUH1, RUH2);
-            }
+    color(PLC) translate([0, (-FUL1-FUL2-FUL3)/2, FUE3*FUH2]) {
+        // horizontal stabilisers
+        for(x = [-1, 1]) translate([x*(FUW4+HSTW1+HSTW2)/2, 0, 0]) {
+            rotate(-x*90) horizontal_stabiliser(x);
+        }
+        // vertical stabiliser
+        translate([0, 0, FUH3/2+(VSTH1+VSTH2)/2]) {
+            vertical_stabiliser(VSTT, VSTL3, VSTL2, VSTL1, VSTH1, VSTH2);
+        }
+        // rudder
+        translate([0, (-FUL4-RUL)/2, (RUH1-FUH3)/2]) {
+            rotate(180) rudder(RUT, RUL, RUH1, RUH2);
         }
     }
     // propeller
     color(OTC) translate([0, (FUL1+FUL2+FUL3+FUL4+PHL)/2, 0]) {
-        propeller();
+        rotate([0, 30, 0]) propeller();
     }
 }
 
@@ -146,21 +147,24 @@ module fuselage() {
     }
 }
 
-module cockpit_fronthalf() {
+module cockpit_fronthalf(w, l1, l2, h) {
     /*
     faces:
         1 irregular hexagon (horizontal, bottom)
         1 trapezoid (vertical, rear)
         4 rectangles
         2 triangles
-    top width = bottom width / 3
+    args:
+        w      = bottom width (top width = w/3)
+        l1, l2 = front/rear length
+        h      = height
     */
-    x1 =          COW/6;
-    x2 =          COW/2;
-    y1 = (-COL1-COL2)/2;
-    y2 = (-COL1+COL2)/2;
-    y3 = ( COL1+COL2)/2;
-    z  =          COH/2;
+    x1 =        w/6;
+    x2 =        w/2;
+    y1 = (-l1-l2)/2;
+    y2 = (-l1+l2)/2;
+    y3 = ( l1+l2)/2;
+    z  =        h/2;
     //
     polyhedron(
         [
@@ -192,88 +196,56 @@ module cockpit_fronthalf() {
 }
 
 module cockpit_rearhalf() {
-    // front
-    translate([0, COL4/2, 0]) {
-        scale([COW, COL3, COH]) trapez_prism();
-    }
-    // rear
-    translate([0, -COL3/2, 0]) {
-        scale([COW, COL4, COH]) rotate(180) {
-            cockpit_end(
-                1-COL4/FUL3*(1-FUW3/FUW2),
-                -1/2 + ((FUH3-FUH2)/2+FUE3*FUH2)/FUL3 * COL4/COH
-            );
-        }
-    }
-}
-
-module trapez_prism() {
-    /*
-    a trapezoidal prism; trapezoids face front and rear;
-    length, height and bottom width = 1;
-    top width = 1/3
+    /* Z centring is done only according to the front half;
+    faces:
+        4 rectangles          (front)
+        3 trapezoids          (front, rear)
+        2 irregular triangles (rear)
     */
-    a = 1/6;
-    b = 1/2;
+    x1 =  COW * (1 - COL4/FUL3 * (1-FUW3/FUW2)) / 2;
+    x2 =  COW/6;
+    x3 =  COW/2;
+    y1 = -COL4/2 - COL3/2;
+    y2 = -COL3/2 + COL4/2;
+    y3 =  COL3/2 + COL4/2;
+    z1 = -COH/2 + ((FUH3-FUH2)/2+FUE3*FUH2)/FUL3 * COL4;
+    z2 = -COH/2;
+    z3 =  COH/2;
+    //
     polyhedron(
         [
             // rear
-            [-b, -b, -b],
-            [-a, -b,  b],
-            [ a, -b,  b],
-            [ b, -b, -b],
+            [-x1, y1, z1],
+            [ x1, y1, z1],
+            // mid
+            [-x3, y2, z2],
+            [-x2, y2, z3],
+            [ x2, y2, z3],
+            [ x3, y2, z2],
             // front
-            [-b,  b, -b],
-            [-a,  b,  b],
-            [ a,  b,  b],
-            [ b,  b, -b],
+            [-x3, y3, z2],
+            [-x2, y3, z3],
+            [ x2, y3, z3],
+            [ x3, y3, z2],
         ],
-        [
-            [0, 1, 2, 3],
-            [0, 3, 7, 4],
-            [0, 4, 5, 1],
-            [1, 5, 6, 2],
-            [2, 6, 7, 3],
-            [4, 7, 6, 5],
-        ]
-    );
-}
-
-module cockpit_end(fxs, fzo) {
-    /*
-    trapezoid on rear end, horizontal line on front end;
-    an irregular triangular prism?
-    maximum dimensions: 1*1*1 if fzo=0;
-    fxs = front X scale factor (1 = same as rear);
-    fzo = front Z offset (from centerline)
-    */
-    a  = 1/6;
-    b  = 1/2;
-    fx = fxs/2;
-    polyhedron(
         [
             // rear
-            [ -b, -b,  -b],
-            [ -a, -b,   b],
-            [  a, -b,   b],
-            [  b, -b,  -b],
+            [0,2,3], [0,3,4,1], [1,4,5], [0,1,5,2],
             // front
-            [-fx,  b, fzo],
-            [ fx,  b, fzo],
-        ],
-        [
-            [0, 1, 2, 3],
-            [0, 3, 5, 4],
-            [1, 4, 5, 2],
-            [0, 4, 1],
-            [2, 5, 3],
+            [2,5,9,6], [2,6,7,3], [3,7,8,4], [4,8,9,5], [6,9,8,7],
         ]
     );
 }
 
 module wing(l1, l2, l3, w1, w2, w3, t1, t2, vs) {
     /*
-    21 faces; root towards viewer;
+    root towards viewer;
+    faces:
+        1 irregular octagon   (root)
+        8 rectangles          (root)
+        2 parallelograms      (mid)
+        4 trapezoids          (mid, tip)
+        6 irregular triangles (mid, tip)
     args:
         l1, l2, l3 = length (inner to outer)
         w1, w2, w3 = width  (inner to outer)
@@ -360,20 +332,20 @@ module horizontal_stabiliser(ss) {
     args:
         ss = sign of slant (-1 or +1)
     */
-    xo2 = ss*HSTL1/(HSTL1+HSTL2)*HSTSL;  // middle X offset
+    xo2 = ss*HSTW1/(HSTW1+HSTW2)*HSTSL;  // middle X offset
     xo3 = ss*HSTSL;                      // front X offset
-    x1a = HSTW1/(2+2*sqrt(2));           // rear X - smaller
-    x1b = HSTW1/2;                       // rear X - larger
-    x2  = HSTW2/2;                       // middle X
-    x3  = HSTW3/2;                       // front X
-    y1  = -HSTL1/2;                      // rear Y
-    y2  = HSTL1/2;                       // mid Y
-    y3  = HSTL1/2+HSTL2;                 // front Y
-    z1a = x1a*HSTT1/HSTW1;               // rear Z - smaller
-    z2a = x1b*HSTT1/HSTW1;               // rear Z - larger
+    x1a = HSTL1/(2+2*sqrt(2));           // rear X - smaller
+    x1b = HSTL1/2;                       // rear X - larger
+    x2  = HSTL2/2;                       // middle X
+    x3  = HSTL3/2;                       // front X
+    y1  = -HSTW1/2;                      // rear Y
+    y2  = HSTW1/2;                       // mid Y
+    y3  = HSTW1/2+HSTW2;                 // front Y
+    z1a = x1a*HSTT1/HSTL1;               // rear Z - smaller
+    z2a = x1b*HSTT1/HSTL1;               // rear Z - larger
     z2  = HSTT2/2;                       // middle Z
     //
-    translate([0, -HSTL2/2, 0]) polyhedron(
+    translate([0, -HSTW2/2, 0]) polyhedron(
         [
             // rear (0-7)
             [  -x1b, y1, -z1a],
@@ -463,7 +435,7 @@ module rudder(w, l, h1, h2) {
     faces:
         1 irregular pentagon       (vertical, rear)
         2 irregular quadrilaterals (vertical)
-        2 right     tringles
+        2 right     triangles
         1 isosceles triangle
     [0, 0, 0] = average of max width, length, height
     args:
@@ -493,9 +465,9 @@ module rudder(w, l, h1, h2) {
 
 module propeller() {
     // hub
-    scale([PHR*2, PHL, PHR*2]) oct_frustum(1/2);
+    scale([PHR*2, PHL, PHR*2]) square_cupola(1/2, 1/2);
     // blades
-    for(x = [0, 1]) rotate([0, 30-x*180, 0]) translate([PBL/2, 0, 0]) {
-        rotate([0,-60,-90]) scale([PBW, PBL, PBT]) oct_wedge(1/2);
+    for(x = [0, 1]) rotate([0, x*180, 0]) translate([PBL/2, 0, 0]) {
+        rotate([0,-45,-90]) scale([PBW, PBL, PBT]) wedge(1/2);
     }
 }
