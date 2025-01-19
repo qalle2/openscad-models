@@ -362,12 +362,11 @@ module wing(w1, w2, w3, l1, l2, l3, t1) {
     /*
     root towards viewer;
     faces:
-        1 irregular octagon   (root)
-        1 irregular hexagon   (top)
-        7 rectangles          (root)
-        2 parallelograms      (mid)
-        2 trapezoids          (mid, tip)
-        6 irregular triangles (mid, tip)
+        2 octagons
+        1 hexagon
+        2 pentagons
+        7 quadrilaterals
+        4 triangles
     args:
         w1...w3 = width     (inner to outer)
         l1...l3 = length    (inner to outer)
@@ -422,30 +421,22 @@ module wing(w1, w2, w3, l1, l2, l3, t1) {
             [ x3, y4,  z2],
         ],
         [
-            // top of entire wing (vertex groups 1-4)
-            [vg1+3, vg1+2, vg2+2, vg3+1, vg4+0, vg4+1, vg3+2, vg2+3],
-            // rear (vertex group 1)
-            [vg1+0, vg1+1, vg1+2, vg1+3, vg1+4, vg1+5, vg1+6, vg1+7],
-            // mid-rear (vertex groups 1 & 2)
-            [vg1+0, vg2+0, vg2+1, vg1+1],
-            [vg1+1, vg2+1, vg2+2, vg1+2],
-            [vg1+3, vg2+3, vg2+4, vg1+4],
-            [vg1+4, vg2+4, vg2+5, vg1+5],
-            [vg1+5, vg2+5, vg2+6, vg1+6],
-            [vg1+6, vg2+6, vg2+7, vg1+7],
-            [vg1+7, vg2+7, vg2+0, vg1+0],
-            // mid-front (vertex groups 2 & 3)
-            [vg2+0, vg3+0, vg3+1, vg2+1],
-            [vg2+4, vg3+2, vg3+3, vg2+5],
-            [vg2+6, vg3+3, vg3+0, vg2+7],
-            [vg2+1, vg3+1, vg2+2],
-            [vg2+3, vg3+2, vg2+4],
-            [vg2+5, vg3+3, vg2+6],
-            [vg2+7, vg3+0, vg2+0],
-            // front (vertex groups 3 & 4)
-            [vg3+0, vg4+0, vg3+1],
-            [vg3+2, vg4+1, vg3+3],
-            [vg3+3, vg4+1, vg4+0, vg3+0],
+            [vg1+0, vg1+1, vg1+2, vg1+3, vg1+4, vg1+5, vg1+6, vg1+7],  // rear
+            [vg1+3, vg1+2, vg2+2, vg3+1, vg4+0, vg4+1, vg3+2, vg2+3],  // top
+            [vg2+6, vg3+3, vg4+1, vg4+0, vg3+0, vg2+7],  // bottom front
+            [vg1+1, vg2+1, vg3+1, vg2+2, vg1+2],  // top left
+            [vg1+3, vg2+3, vg3+2, vg2+4, vg1+4],  // top right
+            [vg1+0, vg2+0, vg2+1, vg1+1],  // rear left
+            [vg1+4, vg2+4, vg2+5, vg1+5],  // rear right
+            [vg1+5, vg2+5, vg2+6, vg1+6],  // rear bottom right
+            [vg1+6, vg2+6, vg2+7, vg1+7],  // rear bottom
+            [vg1+7, vg2+7, vg2+0, vg1+0],  // rear bottom left
+            [vg2+0, vg3+0, vg3+1, vg2+1],  // mid left
+            [vg2+4, vg3+2, vg3+3, vg2+5],  // mid right
+            [vg2+5, vg3+3, vg2+6],  // mid bottom right
+            [vg2+7, vg3+0, vg2+0],  // mid bottom left
+            [vg3+0, vg4+0, vg3+1],  // front left
+            [vg3+2, vg4+1, vg3+3],  // front right
         ]
     );
 }
