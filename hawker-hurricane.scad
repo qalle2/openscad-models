@@ -10,20 +10,20 @@ Fuselage parts:
     3. octagonal frustum, from trailing edge of wings to tail
     4. octagon to rectangle
 */
-FUA  = 2/3;  // width/height (must be uniform)
-FUL1 = 200;
-FUH1 = 120;
-FUL2 = 400;
-FUH2 = 250;
-FUL3 = 550;
-FUH3 = 100;
-FUL4 = 180;
-FUW1 = FUA*FUH1;
-FUW2 = FUA*FUH2;
-FUW3 = FUA*FUH3;
-FUW4 = 20;
-FBW2 = FUW2/(1+sqrt(2));  // width of flat bottom and top
-FUE3 = -1/10;  // elevation (of FUH2)
+FUA   = 2/3;  // width/height ratio (must be uniform)
+FUL1  = 200;
+FUH1  = 120;
+FUL2  = 400;
+FUH2  = 250;
+FUL3  = 550;
+FUH3  = 100;
+FUL4  = 180;
+FUW1  = FUA*FUH1;
+FUW2  = FUA*FUH2;
+FUW3  = FUA*FUH3;
+FUW4  = 20;
+FBW2  = FUW2/(1+sqrt(2));  // width of flat bottom and top
+FUVS3 = -1/10;  // vertical slant (of FUH2)
 
 // wings (W=width=X, L=length=Y, T=thickness=Z, 1-3=inner to outer)
 WIW1 = 180;
@@ -34,7 +34,6 @@ WIL2 = 190;
 WIT2 = 20;
 WIW3 = 80;
 WIL3 = 80;
-WIEL = 35;   // elevation between mid and outer wing
 
 /*
 cockpit; parts:
@@ -43,7 +42,8 @@ cockpit; parts:
     3. mid-rear  (unglazed)
     4. rear      (unglazed)
 */
-COW  = FBW2;
+COW1 = FBW2;      // bottom
+COW2 = FBW2*3/7;  // top
 COL1 =   30;
 COL2 =  150;
 COL3 =   60;
@@ -89,23 +89,29 @@ OTC = [.5, .8, .8];  // other parts
 module hurricane() {
     /* draws everything */
     // fuselage
-    color(FUC) translate([0, 0, 0]) fuselage();
+    color(FUC) fuselage(FUA, FUW4, FUL1, FUL2, FUL3, FUL4, FUH1, FUH2, FUH3, FUVS3*FUH2);
+    // rear half of cockpit
+    color(FUC) {
+        // width at rear
+        rw = COW1*(1-COL4/FUL3*(1-FUW3/FUW2));
+        // total height; also total height of rear half
+        h = ((FUH2-FUH3)/2-FUVS3*FUH2)/FUL3 * COL4 + COH;
+        translate([0, (-FUL1-FUL2+FUL3+FUL4+COL3-COL4)/2, COH+(FUH2-h)/2]) {
+            cockpit_rearhalf(rw, COW1, COW2, COL4, COL3, h, COH);
+        }
+    }
     // front half of cockpit
     color(OTC) translate([0, COL3+(-FUL1-FUL2+FUL3+FUL4+COL1+COL2)/2, (FUH2+COH)/2]) {
-        cockpit_fronthalf(COW, COL1, COL2, COH);
-    }
-    // rear half of cockpit
-    color(FUC) translate([0, (-FUL1-FUL2+FUL3+FUL4+COL3-COL4)/2, (FUH2+COH)/2]) {
-        cockpit_rearhalf();
+        cockpit_fronthalf(COW1, COW2, COL1, COL2, COH);
     }
     // wings
     color(PLC) for(x = [-1, 1]) {
         translate([x*(WIW1+WIW2+WIW3+FBW2)/2, (-FUL1+FUL3+FUL4)/2, (WIT1-FUH2)/2]) {
-            rotate(-x*90) wing(WIW1, WIW2, WIW3, WIL1, WIL2, WIL3, WIT1, WIT2, WIEL);
+            rotate(-x*90) wing(WIL1, WIL2, WIL3, WIW1, WIW2, WIW3, WIT1, WIT2);
         }
     }
     // stabilisers and rudder
-    color(PLC) translate([0, (-FUL1-FUL2-FUL3)/2, FUE3*FUH2]) {
+    color(PLC) translate([0, (-FUL1-FUL2-FUL3)/2, FUVS3*FUH2]) {
         // horizontal stabilisers
         for(x = [-1, 1]) translate([x*(FUW4+HSTW1+HSTW2)/2, 0, 0]) {
             rotate(-x*90) horizontal_stabiliser(x);
@@ -127,27 +133,185 @@ module hurricane() {
 
 hurricane();
 
-module fuselage() {
-    /* centered */
-    // front
-    translate([0, (FUL2+FUL3+FUL4)/2, 0]) {
-        scale([FUW2, FUL1, FUH2]) oct_frustum(FUH1/FUH2);
-    }
-    // mid-front
-    translate([0, (-FUL1+FUL3+FUL4)/2, 0]) {
-        scale([FUW2, FUL2, FUH2]) oct_frustum();
-    }
-    // mid-rear
-    translate([0, (-FUL1-FUL2+FUL4)/2, 0]) rotate(180) {
-        scale([FUW2, FUL3, FUH2]) oct_frustum(FUH3/FUH2, 0, FUE3);
-    }
-    // rear
-    translate([0, (-FUL1-FUL2-FUL3)/2, FUE3*FUH2]) {
-        scale([FUW3, FUL4, FUH3]) rotate(180) square_cupola(FUW4/FUW3, 1);
-    }
+module fuselage(whr, w4, l1, l2, l3, l4, h1, h2, h3, vs3) {
+    /*
+    args:
+        whr     = width/height ratio (front to mid-rear)
+        w4      = width              (rear only)
+        l1...l4 = length             (front to rear)
+        h1...h3 = height             (front to rear)
+        vs3     = vertical slant     (from centerline; mid-rear only)
+    */
+    x1  =     w4/2;
+    x2a = whr*h3/(2+2*sqrt(2));
+    x2b = whr*h3/2;
+    x3a = whr*h2/(2+2*sqrt(2));
+    x3b = whr*h2/2;
+    x4a = whr*h1/(2+2*sqrt(2));
+    x4b = whr*h1/2;
+    //
+    y1 = (-l1-l2-l3-l4)/2;
+    y2 = (-l1-l2-l3+l4)/2;
+    y3 = (-l1-l2+l3+l4)/2;
+    y4 = (-l1+l2+l3+l4)/2;
+    y5 = ( l1+l2+l3+l4)/2;
+    //
+    z1a = -h3/(2+2*sqrt(2)) + vs3;
+    z1b = -h3/2             + vs3;
+    z2a =  h3/(2+2*sqrt(2)) + vs3;
+    z2b =  h3/2             + vs3;
+    z3a = -h2/(2+2*sqrt(2));
+    z3b = -h2/2;
+    z4a =  h2/(2+2*sqrt(2));
+    z4b =  h2/2;
+    z5a = -h1/(2+2*sqrt(2));
+    z5b = -h1/2;
+    z6a =  h1/(2+2*sqrt(2));
+    z6b =  h1/2;
+    //
+    // start indexes of vertex groups (rear to front)
+    vg1 =  0;
+    vg2 =  4;
+    vg3 = 12;
+    vg4 = 20;
+    vg5 = 28;
+    //
+    polyhedron(
+        [
+            // group 1
+            [ -x1, y1, z1b],
+            [ -x1, y1, z2b],
+            [  x1, y1, z2b],
+            [  x1, y1, z1b],
+            // group 2
+            [-x2b, y2, z1a],
+            [-x2b, y2, z2a],
+            [-x2a, y2, z2b],
+            [ x2a, y2, z2b],
+            [ x2b, y2, z2a],
+            [ x2b, y2, z1a],
+            [ x2a, y2, z1b],
+            [-x2a, y2, z1b],
+            // group 3
+            [-x3b, y3, z3a],
+            [-x3b, y3, z4a],
+            [-x3a, y3, z4b],
+            [ x3a, y3, z4b],
+            [ x3b, y3, z4a],
+            [ x3b, y3, z3a],
+            [ x3a, y3, z3b],
+            [-x3a, y3, z3b],
+            // group 4
+            [-x3b, y4, z3a],
+            [-x3b, y4, z4a],
+            [-x3a, y4, z4b],
+            [ x3a, y4, z4b],
+            [ x3b, y4, z4a],
+            [ x3b, y4, z3a],
+            [ x3a, y4, z3b],
+            [-x3a, y4, z3b],
+            // group 5
+            [-x4b, y5, z5a],
+            [-x4b, y5, z6a],
+            [-x4a, y5, z6b],
+            [ x4a, y5, z6b],
+            [ x4b, y5, z6a],
+            [ x4b, y5, z5a],
+            [ x4a, y5, z5b],
+            [-x4a, y5, z5b],
+        ],
+        [
+            // rear end (vertical; vertex group 1)
+            [vg1+0, vg1+1, vg1+2, vg1+3],
+            // rear section (vertex groups 1 & 2)
+            [vg1+0, vg2+0, vg2+1, vg1+1],
+            [vg1+1, vg2+1, vg2+2],
+            [vg1+1, vg2+2, vg2+3, vg1+2],
+            [vg1+2, vg2+3, vg2+4],
+            [vg1+2, vg2+4, vg2+5, vg1+3],
+            [vg1+3, vg2+5, vg2+6],
+            [vg1+3, vg2+6, vg2+7, vg1+0],
+            [vg1+0, vg2+7, vg2+0],
+            // mid-rear section (vertex groups 2 & 3)
+            [vg2+0, vg3+0, vg3+1, vg2+1],
+            [vg2+1, vg3+1, vg3+2, vg2+2],
+            [vg2+2, vg3+2, vg3+3, vg2+3],
+            [vg2+3, vg3+3, vg3+4, vg2+4],
+            [vg2+4, vg3+4, vg3+5, vg2+5],
+            [vg2+5, vg3+5, vg3+6, vg2+6],
+            [vg2+6, vg3+6, vg3+7, vg2+7],
+            [vg2+7, vg3+7, vg3+0, vg2+0],
+            // mid-front section (vertex groups 3 & 4)
+            [vg3+0, vg4+0, vg4+1, vg3+1],
+            [vg3+1, vg4+1, vg4+2, vg3+2],
+            [vg3+2, vg4+2, vg4+3, vg3+3],
+            [vg3+3, vg4+3, vg4+4, vg3+4],
+            [vg3+4, vg4+4, vg4+5, vg3+5],
+            [vg3+5, vg4+5, vg4+6, vg3+6],
+            [vg3+6, vg4+6, vg4+7, vg3+7],
+            [vg3+7, vg4+7, vg4+0, vg3+0],
+            // front section (vertex groups 4 & 5)
+            [vg4+0, vg5+0, vg5+1, vg4+1],
+            [vg4+1, vg5+1, vg5+2, vg4+2],
+            [vg4+2, vg5+2, vg5+3, vg4+3],
+            [vg4+3, vg5+3, vg5+4, vg4+4],
+            [vg4+4, vg5+4, vg5+5, vg4+5],
+            [vg4+5, vg5+5, vg5+6, vg4+6],
+            [vg4+6, vg5+6, vg5+7, vg4+7],
+            [vg4+7, vg5+7, vg5+0, vg4+0],
+            // front end (vertical; vertex group 5)
+            [vg5+0, vg5+7, vg5+6, vg5+5, vg5+4, vg5+3, vg5+2, vg5+1],
+        ]
+    );
 }
 
-module cockpit_fronthalf(w, l1, l2, h) {
+module cockpit_rearhalf(w1, w2a, w2b, l1, l2, h1, h2) {
+    /*
+    faces:
+        4 rectangles          (front)
+        3 trapezoids          (front, rear)
+        2 irregular triangles (rear)
+    args:
+        w1, w2a, w2b = width  at rear, front bottom, front top
+        l1, l2       = length at rear, front
+        h1, h2       = height at rear, front
+    */
+    x1  =       w1/2;
+    x2a =      w2a/2;
+    x2b =      w2b/2;
+    y1  = (-l1-l2)/2;
+    y2  = ( l1-l2)/2;
+    y3  = ( l1+l2)/2;
+    z1  =      -h1/2;
+    z2  =       h1/2-h2;
+    z3  =       h1/2;
+    //
+    polyhedron(
+        [
+            // rear
+            [-x1, y1, z1],
+            [ x1, y1, z1],
+            // mid
+            [-x2a, y2, z2],
+            [-x2b, y2, z3],
+            [ x2b, y2, z3],
+            [ x2a, y2, z2],
+            // front
+            [-x2a, y3, z2],
+            [-x2b, y3, z3],
+            [ x2b, y3, z3],
+            [ x2a, y3, z2],
+        ],
+        [
+            // rear
+            [0,2,3], [0,3,4,1], [1,4,5], [0,1,5,2],
+            // front
+            [2,5,9,6], [2,6,7,3], [3,7,8,4], [4,8,9,5], [6,9,8,7],
+        ]
+    );
+}
+
+module cockpit_fronthalf(w1, w2, l1, l2, h) {
     /*
     faces:
         1 irregular hexagon (horizontal, bottom)
@@ -155,12 +319,12 @@ module cockpit_fronthalf(w, l1, l2, h) {
         4 rectangles
         2 triangles
     args:
-        w      = bottom width (top width = w/3)
+        w1, w2 = bottom/top width
         l1, l2 = front/rear length
         h      = height
     */
-    x1 =        w/6;
-    x2 =        w/2;
+    x1 =       w2/2;
+    x2 =       w1/2;
     y1 = (-l1-l2)/2;
     y2 = (-l1+l2)/2;
     y3 = ( l1+l2)/2;
@@ -195,130 +359,98 @@ module cockpit_fronthalf(w, l1, l2, h) {
     );
 }
 
-module cockpit_rearhalf() {
-    /* Z centring is done only according to the front half;
-    faces:
-        4 rectangles          (front)
-        3 trapezoids          (front, rear)
-        2 irregular triangles (rear)
-    */
-    x1 =  COW * (1 - COL4/FUL3 * (1-FUW3/FUW2)) / 2;
-    x2 =  COW/6;
-    x3 =  COW/2;
-    y1 = -COL4/2 - COL3/2;
-    y2 = -COL3/2 + COL4/2;
-    y3 =  COL3/2 + COL4/2;
-    z1 = -COH/2 + ((FUH3-FUH2)/2+FUE3*FUH2)/FUL3 * COL4;
-    z2 = -COH/2;
-    z3 =  COH/2;
-    //
-    polyhedron(
-        [
-            // rear
-            [-x1, y1, z1],
-            [ x1, y1, z1],
-            // mid
-            [-x3, y2, z2],
-            [-x2, y2, z3],
-            [ x2, y2, z3],
-            [ x3, y2, z2],
-            // front
-            [-x3, y3, z2],
-            [-x2, y3, z3],
-            [ x2, y3, z3],
-            [ x3, y3, z2],
-        ],
-        [
-            // rear
-            [0,2,3], [0,3,4,1], [1,4,5], [0,1,5,2],
-            // front
-            [2,5,9,6], [2,6,7,3], [3,7,8,4], [4,8,9,5], [6,9,8,7],
-        ]
-    );
-}
-
-module wing(l1, l2, l3, w1, w2, w3, t1, t2, vs) {
+module wing(w1, w2, w3, l1, l2, l3, t1, t2) {
     /*
     root towards viewer;
     faces:
         1 irregular octagon   (root)
-        8 rectangles          (root)
+        1 irregular hexagon   (top)
+        7 rectangles          (root)
         2 parallelograms      (mid)
-        4 trapezoids          (mid, tip)
+        2 trapezoids          (mid, tip)
         6 irregular triangles (mid, tip)
     args:
-        l1, l2, l3 = length (inner to outer)
-        w1, w2, w3 = width  (inner to outer)
-        t1, t2     = thickness (inner, middle; outer is zero)
-        vs         = vertical slant from centerline
+        w1...w3 = width     (inner to outer)
+        l1...l3 = length    (inner to outer)
+        t1...t2 = thickness (inner, middle; outer is zero)
     */
     x1a = w1/(2+2*sqrt(2));
     x1b = w1/2;
     x2  = w2/2;
     x3  = w3/2;
-    y1  = (-l1-l2-l3)/2;
-    y2  = ( l1-l2-l3)/2;
-    y3  = ( l1+l2-l3)/2;
-    y4  = ( l1+l2+l3)/2;
+    //
+    y1 = (-l1-l2-l3)/2;
+    y2 = ( l1-l2-l3)/2;
+    y3 = ( l1+l2-l3)/2;
+    y4 = ( l1+l2+l3)/2;
+    //
     z1a = t1/(2+2*sqrt(2));
     z1b = t1/2;
-    z2  = vs-t2/2;
-    z3  = vs+t2*vs/t1;
-    z4  = vs+t2/2;
+    z2  = l2/(l2+l3)*t1/2;
+    z3  = t1/2;
     //
-    translate([0, 0, 0]) {
-        polyhedron(
-            [
-                // rear (0-7)
-                [-x1b, y1, -z1a],
-                [-x1b, y1,  z1a],
-                [-x1a, y1,  z1b],
-                [ x1a, y1,  z1b],
-                [ x1b, y1,  z1a],
-                [ x1b, y1, -z1a],
-                [ x1a, y1, -z1b],
-                [-x1a, y1, -z1b],
-                // mid-rear (8-15)
-                [-x1b, y2, -z1a],
-                [-x1b, y2,  z1a],
-                [-x1a, y2,  z1b],
-                [ x1a, y2,  z1b],
-                [ x1b, y2,  z1a],
-                [ x1b, y2, -z1a],
-                [ x1a, y2, -z1b],
-                [-x1a, y2, -z1b],
-                // mid-front (16-19)
-                [-x2, y3, z2],
-                [-x2, y3, z4],
-                [ x2, y3, z4],
-                [ x2, y3, z2],
-                // front (20-21)
-                [-x3, y4, z3],
-                [ x3, y4, z3],
-            ],
-            [
-                // rear
-                [0,1,2,3,4,5,6,7],
-                // mid-rear
-                [ 0,  8,  9,  1],
-                [ 1,  9, 10,  2],
-                [ 2, 10, 11,  3],
-                [ 3, 11, 12,  4],
-                [ 4, 12, 13,  5],
-                [ 5, 13, 14,  6],
-                [ 6, 14, 15,  7],
-                [ 7, 15,  8,  0],
-                // mid-front
-                [ 8,16,17, 9], [ 9,17,10],
-                [10,17,18,11], [11,18,12],
-                [12,18,19,13], [13,19,14],
-                [14,19,16,15], [15,16, 8],
-                // front
-                [16,20,17], [17,20,21,18],
-                [18,21,19], [19,21,20,16],
-            ]
-        );
-    }
+    // start indexes of vertex groups (rear to front)
+    vg1 = 0;
+    vg2 = 8;
+    vg3 = 16;
+    vg4 = 20;
+    //
+    polyhedron(
+        [
+            // group 1 (rearmost)
+            [-x1b, y1, -z1a],
+            [-x1b, y1,  z1a],
+            [-x1a, y1,  z1b],
+            [ x1a, y1,  z1b],
+            [ x1b, y1,  z1a],
+            [ x1b, y1, -z1a],
+            [ x1a, y1, -z1b],
+            [-x1a, y1, -z1b],
+            // group 2
+            [-x1b, y2, -z1a],
+            [-x1b, y2,  z1a],
+            [-x1a, y2,  z1b],
+            [ x1a, y2,  z1b],
+            [ x1b, y2,  z1a],
+            [ x1b, y2, -z1a],
+            [ x1a, y2, -z1b],
+            [-x1a, y2, -z1b],
+            // group 3
+            [ -x2, y3,   z2],
+            [ -x2, y3,  z1b],
+            [  x2, y3,  z1b],
+            [  x2, y3,   z2],
+            // group 4
+            [ -x3, y4,  z3],
+            [  x3, y4,  z3],
+        ],
+        [
+            // top of entire wing (vertex groups 1-4)
+            [vg1+3, vg1+2, vg2+2, vg3+1, vg4+0, vg4+1, vg3+2, vg2+3],
+            // rear (vertex group 1)
+            [vg1+0, vg1+1, vg1+2, vg1+3, vg1+4, vg1+5, vg1+6, vg1+7],
+            // mid-rear (vertex groups 1 & 2)
+            [vg1+0, vg2+0, vg2+1, vg1+1],
+            [vg1+1, vg2+1, vg2+2, vg1+2],
+            [vg1+3, vg2+3, vg2+4, vg1+4],
+            [vg1+4, vg2+4, vg2+5, vg1+5],
+            [vg1+5, vg2+5, vg2+6, vg1+6],
+            [vg1+6, vg2+6, vg2+7, vg1+7],
+            [vg1+7, vg2+7, vg2+0, vg1+0],
+            // mid-front (vertex groups 2 & 3)
+            [vg2+0, vg3+0, vg3+1, vg2+1],
+            [vg2+4, vg3+2, vg3+3, vg2+5],
+            [vg2+6, vg3+3, vg3+0, vg2+7],
+            [vg2+1, vg3+1, vg2+2],
+            [vg2+3, vg3+2, vg2+4],
+            [vg2+5, vg3+3, vg2+6],
+            [vg2+7, vg3+0, vg2+0],
+            // front (vertex groups 3 & 4)
+            [vg3+0, vg4+0, vg3+1],
+            [vg3+2, vg4+1, vg3+3],
+            [vg3+3, vg4+1, vg4+0, vg3+0],
+        ]
+    );
 }
 
 module horizontal_stabiliser(ss) {
@@ -326,24 +458,34 @@ module horizontal_stabiliser(ss) {
     root towards viewer;
     [0, 0, 0] = average of max width, length, height;
     faces:
-        1 octagon (vertical, rear)
-        2 trapezoids (rear top & bottom)
-        ?
+        1 octagon    (vertical, rear)
+        1 hexagon    (horizontal, top)
+        2 parallelograms (rear front & rear)
+        2 trapezoids (bottom)
+        6 triangles (rear & front)
     args:
         ss = sign of slant (-1 or +1)
     */
-    xo2 = ss*HSTW1/(HSTW1+HSTW2)*HSTSL;  // middle X offset
-    xo3 = ss*HSTSL;                      // front X offset
-    x1a = HSTL1/(2+2*sqrt(2));           // rear X - smaller
-    x1b = HSTL1/2;                       // rear X - larger
-    x2  = HSTL2/2;                       // middle X
-    x3  = HSTL3/2;                       // front X
-    y1  = -HSTW1/2;                      // rear Y
-    y2  = HSTW1/2;                       // mid Y
-    y3  = HSTW1/2+HSTW2;                 // front Y
-    z1a = x1a*HSTT1/HSTL1;               // rear Z - smaller
-    z2a = x1b*HSTT1/HSTL1;               // rear Z - larger
-    z2  = HSTT2/2;                       // middle Z
+    xo2 = ss*HSTW1/(HSTW1+HSTW2)*HSTSL;
+    xo3 = ss*HSTSL;
+    x1a = HSTL1/(2+2*sqrt(2));
+    x1b = HSTL1/2;
+    x2  = HSTL2/2;
+    x3  = HSTL3/2;
+    //
+    y1 = -HSTW1/2;
+    y2 =  HSTW1/2;
+    y3 =  HSTW1/2+HSTW2;
+    //
+    z1a = x1a*HSTT1/HSTL1;
+    z2a = x1b*HSTT1/HSTL1;
+    z3a = HSTT1/2-HSTT2;
+    z3b =  HSTT1/2;
+    //
+    // indexes of vertex groups (rear to front)
+    vg1 =  0;
+    vg2 =  8;
+    vg3 = 12;
     //
     translate([0, -HSTW2/2, 0]) polyhedron(
         [
@@ -357,25 +499,31 @@ module horizontal_stabiliser(ss) {
             [   x1a, y1, -z2a],
             [  -x1a, y1, -z2a],
             // mid (8-11)
-            [xo2-x2, y2,  -z2],
-            [xo2-x2, y2,   z2],
-            [xo2+x2, y2,   z2],
-            [xo2+x2, y2,  -z2],
+            [xo2-x2, y2, z3a],
+            [xo2-x2, y2, z3b],
+            [xo2+x2, y2, z3b],
+            [xo2+x2, y2, z3a],
             // front (12-13)
-            [xo3-x3, y3,    0],
-            [xo3+x3, y3,    0],
+            [xo3-x3, y3, z3b],
+            [xo3+x3, y3, z3b],
         ],
         [
+            // entire top
+            [vg1+2, vg2+1, vg2+4, vg2+5, vg2+2, vg1+3],
             // rear
-            [0,1,2,3,4,5,6,7],
+            [vg1+0, vg1+1, vg1+2, vg1+3, vg1+4, vg1+5, vg1+6, vg1+7],
             // middle
-            [0, 8, 9,1], [1, 9,2],
-            [2, 9,10,3], [3,10,4],
-            [4,10,11,5], [5,11,6],
-            [6,11, 8,7], [7, 8,0],
+            [vg1+0, vg2+0, vg2+1, vg1+1],
+            [vg1+4, vg2+2, vg2+3, vg1+5],
+            [vg1+6, vg2+3, vg2+0, vg1+7],
+            [vg1+1, vg2+1, vg1+2],
+            [vg1+3, vg2+2, vg1+4],
+            [vg1+5, vg2+3, vg1+6],
+            [vg1+7, vg2+0, vg1+0],
             // front
-            [8,11,13,12], [ 8,12, 9],
-            [9,12,13,10], [10,13,11],
+            [vg2+0, vg2+3, vg3+1, vg2+4],
+            [vg2+0, vg2+4, vg2+1],
+            [vg2+2, vg3+1, vg2+3],
         ]
     );
 }
