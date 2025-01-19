@@ -362,11 +362,9 @@ module wing(w1, w2, w3, l1, l2, l3, t1) {
     /*
     root towards viewer;
     faces:
-        2 octagons
-        1 hexagon
-        2 pentagons
-        7 quadrilaterals
-        4 triangles
+        3 hexagons
+        5 quadrilaterals
+        6 triangles
     args:
         w1...w3 = width     (inner to outer)
         l1...l3 = length    (inner to outer)
@@ -381,60 +379,53 @@ module wing(w1, w2, w3, l1, l2, l3, t1) {
     y3 = ( l1+l2-l3)/2;
     y4 = ( l1+l2+l3)/2;
     //
-    z1 = t1/5;
-    z2 = t1/2;
-    z3 = z2-l3/(l2+l3)*t1;
+    z1 = t1/2;
+    z2 = z1-l3/(l2+l3)*t1;
     //
     // start indexes of vertex groups (rear to front)
     vg1 =  0;
-    vg2 =  8;
-    vg3 = 16;
-    vg4 = 20;
+    vg2 =  6;
+    vg3 = 12;
+    vg4 = 16;
     //
     polyhedron(
         [
             // group 1 (rearmost)
-            [-x1, y1, -z1],
-            [-x1, y1,  z1],
-            [-x2, y1,  z2],
-            [ x2, y1,  z2],
-            [ x1, y1,  z1],
-            [ x1, y1, -z1],
-            [ x2, y1, -z2],
-            [-x2, y1, -z2],
+            [-x1, y1,   0],
+            [-x2, y1,  z1],
+            [ x2, y1,  z1],
+            [ x1, y1,   0],
+            [ x2, y1, -z1],
+            [-x2, y1, -z1],
             // group 2
-            [-x1, y2, -z1],
-            [-x1, y2,  z1],
-            [-x2, y2,  z2],
-            [ x2, y2,  z2],
-            [ x1, y2,  z1],
-            [ x1, y2, -z1],
-            [ x2, y2, -z2],
-            [-x2, y2, -z2],
+            [-x1, y2,   0],
+            [-x1, y2,   0],
+            [ x1, y2,   0],
+            [ x1, y2,   0],
+            [ x2, y2, -z1],
+            [-x2, y2, -z1],
             // group 3
-            [-x2, y3,  z3],
             [-x2, y3,  z2],
+            [-x2, y3,  z1],
+            [ x2, y3,  z1],
             [ x2, y3,  z2],
-            [ x2, y3,  z3],
             // group 4
-            [-x3, y4,  z2],
-            [ x3, y4,  z2],
+            [-x3, y4,  z1],
+            [ x3, y4,  z1],
         ],
         [
-            [vg1+0, vg1+1, vg1+2, vg1+3, vg1+4, vg1+5, vg1+6, vg1+7],  // rear
-            [vg1+3, vg1+2, vg2+2, vg3+1, vg4+0, vg4+1, vg3+2, vg2+3],  // top
-            [vg2+6, vg3+3, vg4+1, vg4+0, vg3+0, vg2+7],  // bottom front
-            [vg1+1, vg2+1, vg3+1, vg2+2, vg1+2],  // top left
-            [vg1+3, vg2+3, vg3+2, vg2+4, vg1+4],  // top right
-            [vg1+0, vg2+0, vg2+1, vg1+1],  // rear left
-            [vg1+4, vg2+4, vg2+5, vg1+5],  // rear right
-            [vg1+5, vg2+5, vg2+6, vg1+6],  // rear bottom right
-            [vg1+6, vg2+6, vg2+7, vg1+7],  // rear bottom
-            [vg1+7, vg2+7, vg2+0, vg1+0],  // rear bottom left
-            [vg2+0, vg3+0, vg3+1, vg2+1],  // mid left
-            [vg2+4, vg3+2, vg3+3, vg2+5],  // mid right
-            [vg2+5, vg3+3, vg2+6],  // mid bottom right
-            [vg2+7, vg3+0, vg2+0],  // mid bottom left
+            [vg1+0, vg1+1, vg1+2, vg1+3, vg1+4, vg1+5],  // rear
+            [vg1+1, vg3+1, vg4+0, vg4+1, vg3+2, vg1+2],  // top
+            [vg2+4, vg3+3, vg4+1, vg4+0, vg3+0, vg2+5],  // bottom front
+            [vg1+0, vg2+0, vg3+1, vg1+1],  // top left
+            [vg1+2, vg3+2, vg2+2, vg1+3],  // top right
+            [vg1+3, vg2+2, vg2+4, vg1+4],  // rear bottom right
+            [vg1+4, vg2+4, vg2+5, vg1+5],  // rear bottom
+            [vg1+5, vg2+5, vg2+0, vg1+0],  // rear bottom left
+            [vg2+0, vg3+0, vg3+1],  // mid left
+            [vg2+2, vg3+2, vg3+3],  // mid right
+            [vg2+2, vg3+3, vg2+4],  // mid bottom right
+            [vg2+5, vg3+0, vg2+0],  // mid bottom left
             [vg3+0, vg4+0, vg3+1],  // front left
             [vg3+2, vg4+1, vg3+3],  // front right
         ]
