@@ -31,7 +31,6 @@ WIL1 = 380;
 WIT1 = 70;
 WIW2 = 620;
 WIL2 = 190;
-WIT2 = 20;
 WIW3 = 80;
 WIL3 = 80;
 
@@ -107,7 +106,7 @@ module hurricane() {
     // wings
     color(PLC) for(x = [-1, 1]) {
         translate([x*(WIW1+WIW2+WIW3+FBW2)/2, (-FUL1+FUL3+FUL4)/2, (WIT1-FUH2)/2]) {
-            rotate(-x*90) wing(WIL1, WIL2, WIL3, WIW1, WIW2, WIW3, WIT1, WIT2);
+            rotate(-x*90) wing(WIL1, WIL2, WIL3, WIW1, WIW2, WIW3, WIT1);
         }
     }
     // stabilisers and rudder
@@ -359,7 +358,7 @@ module cockpit_fronthalf(w1, w2, l1, l2, h) {
     );
 }
 
-module wing(w1, w2, w3, l1, l2, l3, t1, t2) {
+module wing(w1, w2, w3, l1, l2, l3, t1) {
     /*
     root towards viewer;
     faces:
@@ -372,57 +371,55 @@ module wing(w1, w2, w3, l1, l2, l3, t1, t2) {
     args:
         w1...w3 = width     (inner to outer)
         l1...l3 = length    (inner to outer)
-        t1...t2 = thickness (inner, middle; outer is zero)
+        t1      = thickness (inner)
     */
-    x1a = w1/(2+2*sqrt(2));
-    x1b = w1/2;
-    x2  = w2/2;
-    x3  = w3/2;
+    x1 = w1/2;
+    x2 = w2/2;
+    x3 = w3/2;
     //
     y1 = (-l1-l2-l3)/2;
     y2 = ( l1-l2-l3)/2;
     y3 = ( l1+l2-l3)/2;
     y4 = ( l1+l2+l3)/2;
     //
-    z1a = t1/(2+2*sqrt(2));
-    z1b = t1/2;
-    z2  = l2/(l2+l3)*t1/2;
-    z3  = t1/2;
+    z1 = t1/5;
+    z2 = t1/2;
+    z3 = z2-l3/(l2+l3)*t1;
     //
     // start indexes of vertex groups (rear to front)
-    vg1 = 0;
-    vg2 = 8;
+    vg1 =  0;
+    vg2 =  8;
     vg3 = 16;
     vg4 = 20;
     //
     polyhedron(
         [
             // group 1 (rearmost)
-            [-x1b, y1, -z1a],
-            [-x1b, y1,  z1a],
-            [-x1a, y1,  z1b],
-            [ x1a, y1,  z1b],
-            [ x1b, y1,  z1a],
-            [ x1b, y1, -z1a],
-            [ x1a, y1, -z1b],
-            [-x1a, y1, -z1b],
+            [-x1, y1, -z1],
+            [-x1, y1,  z1],
+            [-x2, y1,  z2],
+            [ x2, y1,  z2],
+            [ x1, y1,  z1],
+            [ x1, y1, -z1],
+            [ x2, y1, -z2],
+            [-x2, y1, -z2],
             // group 2
-            [-x1b, y2, -z1a],
-            [-x1b, y2,  z1a],
-            [-x1a, y2,  z1b],
-            [ x1a, y2,  z1b],
-            [ x1b, y2,  z1a],
-            [ x1b, y2, -z1a],
-            [ x1a, y2, -z1b],
-            [-x1a, y2, -z1b],
+            [-x1, y2, -z1],
+            [-x1, y2,  z1],
+            [-x2, y2,  z2],
+            [ x2, y2,  z2],
+            [ x1, y2,  z1],
+            [ x1, y2, -z1],
+            [ x2, y2, -z2],
+            [-x2, y2, -z2],
             // group 3
-            [ -x2, y3,   z2],
-            [ -x2, y3,  z1b],
-            [  x2, y3,  z1b],
-            [  x2, y3,   z2],
+            [-x2, y3,  z3],
+            [-x2, y3,  z2],
+            [ x2, y3,  z2],
+            [ x2, y3,  z3],
             // group 4
-            [ -x3, y4,  z3],
-            [  x3, y4,  z3],
+            [-x3, y4,  z2],
+            [ x3, y4,  z2],
         ],
         [
             // top of entire wing (vertex groups 1-4)
