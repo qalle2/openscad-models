@@ -16,10 +16,11 @@ FUH2  = 250;
 FUL3  = 550;
 FUH3  = 100;
 FUL4  = 180;
+FUH4  =  80;
 FUW1  = FUA*FUH1;
 FUW2  = FUA*FUH2;
 FUW3  = FUA*FUH3;
-FUW4  = 20;
+FUW4  =  20;
 FBW2  = FUW2/(1+sqrt(2));  // width of flat bottom and top
 FUVS3 = -1/10;  // vertical slant (of FUH2)
 
@@ -57,17 +58,16 @@ HSTL3 =   60;
 HSTSL =   10;  // horizontal slant from centerline
 
 // vertical stabiliser (L=length=Y, H=height=Z, T=thickness=X)
-VSTL1 = FUL4*2/5;          // front part
-VSTL2 = FUL4*2/5;          // mid part
-VSTL3 = FUL4-VSTL1-VSTL2;  // rear part
-VSTH1 = 125;               // thick (lower) part
-VSTH2 =  45;               // thin  (upper) part
+VSTL1 = FUL4;    // bottom
+VSTL2 = FUL4/3;  // top
+VSTH1 = 170;     // rear
+VSTH2 = 125;     // front
 VSTT  = FUW4;
 
 // rudder (L=length=Y, H=height=Z, T=thickness=X)
-RUL  =  80;               // length
-RUH1 = FUH3+VSTH1+VSTH2;  // height 1 (front)
-RUH2 = FUH3+VSTH1-VSTH2;  // height 2 (rear)
+RUL  = 80;                  // length
+RUH1 = FUH4+VSTH1;          // height 1 (front)
+RUH2 = FUH4-VSTH1+2*VSTH2;  // height 2 (rear)
 RUT  = FUW4;
 
 // propeller
@@ -85,7 +85,7 @@ OTC = [.5, .8, .8];  // other parts
 module hurricane() {
     /* draws everything */
     // fuselage
-    color(FUC) fuselage(FUA, FUW4, FUL1, FUL2, FUL3, FUL4, FUH1, FUH2, FUH3, FUVS3*FUH2);
+    color(FUC) fuselage(FUA, FUW4, FUL1, FUL2, FUL3, FUL4, FUH1, FUH2, FUH3, FUH4, FUVS3*FUH2);
     // rear half of cockpit
     color(FUC) {
         // width at rear
@@ -113,12 +113,12 @@ module hurricane() {
             rotate(-x*90) horizontal_stabiliser(HSTL1, HSTL2, HSTL3, HSTW1, HSTW2, HSTT1, x*HSTSL);
         }
         // vertical stabiliser
-        translate([0, 0, FUH3/2+(VSTH1+VSTH2)/2]) {
-            vertical_stabiliser(VSTT, VSTL3, VSTL2, VSTL1, VSTH1, VSTH2);
+        translate([0, 0, (FUH4+VSTH1)/2]) {
+            vertical_stabiliser(VSTT, VSTL1, VSTL2, VSTH1, VSTH2);
         }
         // rudder
-        translate([0, (-FUL4-RUL)/2, (RUH1-FUH3)/2]) {
-            rotate(180) rudder(RUT, RUL, RUH1, RUH2);
+        translate([0, (-FUL4-RUL)/2, (RUH1-FUH4)/2]) {
+            rudder(RUT, RUL, RUH1, RUH2);
         }
     }
     // propeller
@@ -129,7 +129,7 @@ module hurricane() {
 
 hurricane();
 
-module fuselage(whr, w4, l1, l2, l3, l4, h1, h2, h3, vs3) {
+module fuselage(whr, w4, l1, l2, l3, l4, h1, h2, h3, h4, vs3) {
     /*
     args:
         whr     = width/height ratio (front to mid-rear)
@@ -152,6 +152,8 @@ module fuselage(whr, w4, l1, l2, l3, l4, h1, h2, h3, vs3) {
     y4 = (-l1+l2+l3+l4)/2;
     y5 = ( l1+l2+l3+l4)/2;
     //
+    z0a = -h4/2             + vs3;
+    z0b =  h4/2             + vs3;
     z1a = -h3/(2+2*sqrt(2)) + vs3;
     z1b = -h3/2             + vs3;
     z2a =  h3/(2+2*sqrt(2)) + vs3;
@@ -175,10 +177,10 @@ module fuselage(whr, w4, l1, l2, l3, l4, h1, h2, h3, vs3) {
     polyhedron(
         [
             // group 1
-            [ -x1, y1, z1b],
-            [ -x1, y1, z2b],
-            [  x1, y1, z2b],
-            [  x1, y1, z1b],
+            [ -x1, y1, z0a],
+            [ -x1, y1, z0b],
+            [  x1, y1, z0b],
+            [  x1, y1, z0a],
             // group 2
             [-x2b, y2, z1a],
             [-x2b, y2, z2a],
@@ -474,41 +476,43 @@ module horizontal_stabiliser(w1, w2, w3, l1, l2, t1, hs=0) {
     );
 }
 
-module vertical_stabiliser(w, l1, l2, l3, h1, h2) {
+module vertical_stabiliser(w, l1, l2, h1, h2) {
     /*
     root towards viewer;
     args:
-        w       = width
-        l1...l3 = length (rear to front)
-        h1...h2 = height (bottom to top)
+        w      = width
+        l1, l2 = length (bottom, top)
+        h1, h2 = height (rear, front)
     */
     x = w/2;
     //
-    y1 = (-l1-l2-l3)/2;
-    y2 = ( l1-l2-l3)/2;
-    y3 = ( l1+l2-l3)/2;
-    y4 = ( l1-l2+l3)/2;
-    y5 = ( l1+l2+l3)/2;
+    y1 = -l1/2;
+    y2 = -l1/2+l2;
+    y3 =  l2/2;
+    y4 =  l1/2;
     //
-    z1 = (-h1-h2)/2;
-    z2 = ( h1-h2)/2;
-    z3 = ( h1+h2)/2;
+    z1 = -h1/2;
+    z2 = -h1/2+h2;
+    z3 =  h1/2;
     //
     polyhedron(
         [
-            // first clockwise, then front
-            [-x, y1, z1],  //  0
-            [-x, y1, z2],  //  1
-            [ 0, y1, z3],  //  2
-            [ x, y1, z2],  //  3
-            [ x, y1, z1],  //  4
-            [-x, y2, z2],  //  5
-            [ 0, y2, z3],  //  6
-            [ x, y2, z2],  //  7
-            [-x, y3, z1],  //  8
-            [ x, y3, z1],  //  9
-            [ 0, y4, z2],  // 10
-            [ 0, y5, z1],  // 11
+            // rear (0-4)
+            [-x, y1, z1],
+            [-x, y1, z2],
+            [ 0, y1, z3],
+            [ x, y1, z2],
+            [ x, y1, z1],
+            // mid-rear (5-7)
+            [-x, y2, z2],
+            [ 0, y2, z3],
+            [ x, y2, z2],
+            // mid-front (8-10)
+            [-x, y3, z1],
+            [ x, y3, z1],
+            [ 0, y3, z2],
+            // front (11)
+            [ 0, y4, z1],
         ],
         [
             [0, 4, 9,11, 8],  // bottom
@@ -527,7 +531,6 @@ module vertical_stabiliser(w, l1, l2, l3, h1, h2) {
 
 module rudder(w, l, h1, h2) {
     /*
-    root towards viewer;
     args:
         w     = width
         l     = length
@@ -536,27 +539,27 @@ module rudder(w, l, h1, h2) {
     x  =  w/2;
     y  =  l/2;
     z1 = h1/2;
-    z2 = h1/2-h2/4;
+    z2 = h2/2;
     //
     polyhedron(
         [
-            // rear (0-4)
-            [-x, -y, -z1],
-            [-x, -y,  z2],
-            [ 0, -y,  z1],
-            [ x, -y,  z2],
-            [ x, -y, -z1],
-            // front (5-6)
-            [ 0,  y, -z2],
-            [ 0,  y,  z2],
+            // rear (0-1)
+            [ 0, -y, -z2],
+            [ 0, -y,  z2],
+            // front (2-6)
+            [-x,  y, -z1],
+            [-x,  y,  z2],
+            [ 0,  y,  z1],
+            [ x,  y,  z2],
+            [ x,  y, -z1],
         ],
         [
-            [0,1,2,3,4],  // rear
-            [0,5,6,1],    // bottom right
-            [3,6,5,4],    // bottom left
-            [0,4,5],      // bottom
-            [1,6,2],      // top right
-            [2,6,3],      // top left
+            [2,6,5,4,3],  // front (root)
+            [0,2,3,1],    // bottom left
+            [0,1,5,6],    // bottom right
+            [0,6,2],      // bottom
+            [1,3,4],      // top    left
+            [1,4,5],      // top    right
         ]
     );
 }
