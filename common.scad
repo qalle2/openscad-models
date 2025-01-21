@@ -328,6 +328,47 @@ module hex_wedge(fw=(sqrt(7)-1)/3, fx=0, fz=0) {
     );
 }
 
+module hex_to_rect(fw=(sqrt(7)-1)/3, fh=1/2, fx=0, fz=0) {
+    /*
+    fw     = front width
+             (default = smaller width of rear hexagon)
+    fh     = front height
+    fx, fz = front X/Z offset from centerline
+    */
+    a = 1/2;
+    b = (sqrt(7)-1)/6;
+    c = fw/2;
+    d = fh/2;
+    polyhedron(
+        [
+            // rear (0-5)
+            [  -a, -a,    0],
+            [  -b, -a,    a],
+            [   b, -a,    a],
+            [   a, -a,    0],
+            [   b, -a,   -a],
+            [  -b, -a,   -a],
+            // front (6-9)
+            [fx-c,  a, fz-d],
+            [fx-c,  a, fz+d],
+            [fx+c,  a, fz+d],
+            [fx+c,  a, fz-d],
+        ],
+        [
+            [0,1,2,3,4,5],  // rear
+            [6,9,8,7],      // front
+            [1,7,8,2],      // top
+            [4,9,6,5],      // bottom
+            [0,7,1],        // top left
+            [2,8,3],        // top right
+            [3,8,9],        // right
+            [3,9,4],        // bottom right
+            [5,6,0],        // bottom left
+            [0,6,7],        // left
+        ]
+    );
+}
+
 module hex_frustum(fs=(sqrt(7)-1)/3, fxo=0, fzo=0) {
     /*
     args:
@@ -567,6 +608,7 @@ scale(100) {
 
     translate([-3, 0, -1]) hex_pyramid();
     translate([-1, 0, -1]) hex_wedge();
+    translate([ 1, 0, -1]) hex_to_rect();
     translate([ 3, 0, -1]) hex_frustum();
 
     translate([-3, 0, -3]) oct_pyramid();

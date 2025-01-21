@@ -249,6 +249,9 @@ module cockpit_fronthalf(w1, w2, l1, l2, h) {
 
 module wing(w1, w2, w3, l1, l2, l3, t1, hs) {
     /*
+    tip has zero thickness;
+    top is horizontal;
+    bottom has the same slant in middle and outer sections;
     root towards viewer;
     args:
         w1...w3 = width     (inner to outer)
@@ -256,69 +259,27 @@ module wing(w1, w2, w3, l1, l2, l3, t1, hs) {
         t1      = thickness (inner)
         hs      = horizontal slant
     */
-    x1 = w1/2;
-    x2 = w2/2;
-    x3 = w3/2;
-    //
-    hs1 = l2/(l2+l3)*hs;
-    hs2 =            hs;
-    //
-    y1 = (-l1-l2-l3)/2;
-    y2 = ( l1-l2-l3)/2;
-    y3 = ( l1+l2-l3)/2;
-    y4 = ( l1+l2+l3)/2;
-    //
-    z1 = t1/2;
-    z2 = z1-l3/(l2+l3)*t1;
-    //
-    polyhedron(
-        [
-            // rear (0-5)
-            [-x1, y1,   0],
-            [-x2, y1,  z1],
-            [ x2, y1,  z1],
-            [ x1, y1,   0],
-            [ x2, y1, -z1],
-            [-x2, y1, -z1],
-            // mid-rear (6-11)
-            [-x1, y2,   0],
-            [-x1, y2,   0],
-            [ x1, y2,   0],
-            [ x1, y2,   0],
-            [ x2, y2, -z1],
-            [-x2, y2, -z1],
-            // mid-front (12-15)
-            [hs1-x2, y3,  z2],
-            [hs1-x2, y3,  z1],
-            [hs1+x2, y3,  z1],
-            [hs1+x2, y3,  z2],
-            // front (16-17)
-            [hs2-x3, y4,  z1],
-            [hs2+x3, y4,  z1],
-        ],
-        [
-            [ 0, 1, 2, 3, 4, 5],  // rear
-            [ 1,13,16,17,14, 2],  // top
-            [10,15,17,16,12,11],  // bottom front
-            [ 3, 8,10, 4],  // bottom rear  right
-            [ 4,10,11, 5],  // bottom rear
-            [ 5,11, 6, 0],  // bottom rear  left
-            [ 0, 6, 1],     // top    rear  left
-            [ 2, 8, 3,],    // top    rear  right
-            [ 1, 6,13],     // top    front left
-            [ 2,14, 8],     // top    front right
-            [ 6,12,13],     // mid    mid   left
-            [ 8,14,15],     // mid    mid   right
-            [12,16,13],     // mid    front left
-            [14,17,15],     // mid    front right
-            [11,12, 6],     // bottom mid   left
-            [ 8,15,10],     // bottom mid   right
-        ]
-    );
+    l2r = l2/(l2+l3);
+    l3r = l3/(l2+l3);
+    // rear (right hexagonal prism)
+    translate([0, (-l2-l3)/2, 0]) {
+        scale([w1, l1, t1]) hex_frustum(1);
+    }
+    // middle (hexagon to rectangle)
+    translate([0, (l1-l3)/2, 0]) {
+        scale([w1, l2, t1]) hex_to_rect(w2/w1, l3r, hs*l2r/w1, l2r/2);
+    }
+    // outer (rectangular wedge)
+    translate([hs*l2r, (l1+l2)/2, l2r*t1/2]) {
+        scale([w2, l3, l3r*t1]) wedge(w3/w2, l3/(l2+l3), 1/2);
+    }
 }
 
 module horizontal_stabiliser(w1, w2, w3, l1, l2, t1, hs=0) {
     /*
+    tip has zero thickness;
+    top is horizontal;
+    bottom has the same slant in middle and outer sections;
     root towards viewer;
     args:
         w1...w3 = width     (inner to outer)
@@ -326,52 +287,16 @@ module horizontal_stabiliser(w1, w2, w3, l1, l2, t1, hs=0) {
         t1      = thickness (inner)
         hs      = horizontal slant
     */
-    xo1 = l1/(l1+l2)*hs;
-    xo2 = hs;
-    x1  = w1/2;
-    x2  = w2/2;
-    x3  = w3/2;
-    //
-    y1 = (-l1-l2)/2;
-    y2 = ( l1-l2)/2;
-    y3 = ( l1+l2)/2;
-    //
-    z1  = x1*t1/w1;
-    z2a = t1/2-l2/(l1+l2)*t1;
-    z2b = t1/2;
-    //
-    polyhedron(
-        [
-            // rear
-            [   -x1, y1,   0],
-            [   -x2, y1,  z1],
-            [    x2, y1,  z1],
-            [    x1, y1,   0],
-            [    x2, y1, -z1],
-            [   -x2, y1, -z1],
-            // mid
-            [xo1-x2, y2, z2a],
-            [xo1-x2, y2, z2b],
-            [xo1+x2, y2, z2b],
-            [xo1+x2, y2, z2a],
-            // front
-            [xo2-x3, y3, z2b],
-            [xo2+x3, y3, z2b],
-        ],
-        [
-            [0, 1, 2, 3, 4, 5],  //        rear
-            [1, 7,10,11, 8, 2],  // top
-            [4, 9,11,10, 6, 5],  // bottom
-            [0, 7, 1],           // top    rear  left
-            [2, 8, 3],           // top    rear  right
-            [3, 9, 4],           // bottom rear  right
-            [5, 6, 0],           // bottom rear  left
-            [0, 6, 7],           //        rear  left
-            [3, 8, 9],           //        rear  right
-            [6,10, 7],           //        front left
-            [8,11, 9],           //        front right
-        ]
-    );
+    l1r = l1/(l1+l2);
+    l2r = l2/(l1+l2);
+    // inner (hexagon to rectangle)
+    translate([0, -l2/2, 0]) {
+        scale([w1, l1, t1]) hex_to_rect(w2/w1, l2r, l1r*hs/w1, l1r/2);
+    }
+    // outer (rectangular wedge)
+    translate([hs*l1r, l1/2, l1r*t1/2]) {
+        scale([w2, l2, l2r*t1]) wedge(w3/w2, l2r*hs/w2, 1/2);
+    }
 }
 
 module vertical_stabiliser(w, le, h1, h2) {
@@ -382,7 +307,7 @@ module vertical_stabiliser(w, le, h1, h2) {
         le     = bottom length (top length = this / 3)
         h1, h2 = height (rear, front)
     */
-    
+
     // bottom rear (full-width part)
     translate([0, -le/6, (-h1+h2)/2]) scale([w, le*2/3, h2]) {
         rotate([90, 0, 0]) rect_frustum(1, 1/2, 0, 1/4);
