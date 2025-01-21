@@ -81,7 +81,7 @@ color(FUC) {
         scale([FUA*FUH3, FUL2, FUH3]) oct_frustum(FUH2/FUH3);
     }
     // mid
-    scale([FUA*FUH3, FUL3, FUH3]) oct_frustum();
+    scale([FUA*FUH3, FUL3, FUH3]) oct_frustum(1);
     // mid-rear
     translate([0, -(FUL3+FUL4)/2, 0]) {
         rotate(180) scale([FUA*FUH3, FUL4, FUH3]) oct_frustum(FUH4/FUH3);
@@ -96,18 +96,18 @@ color(FUC) {
 color(PLC) translate([0, 0, (WIW1/WIA-FUH3)/2]) for(x = [-1, 1]) {
     // inner (straight)
     translate([x*(FBW3+WIL1)/2, 0, 0]) {
-        rotate(-x*90) scale([WIW1, WIL1, WIW1/WIA]) oct_frustum();
+        rotate(-x*90) scale([WIW1, WIL1, WIW1/WIA]) hex_frustum(1);
     }
-    // middle (horizontal & vertical slope)
+    // middle (horizontal & vertical slant)
     translate([x*((FBW3+WIL2)/2+WIL1), 0, 0]) {
         rotate(-x*90) scale([WIW1, WIL2, WIW1/WIA]) {
-            oct_frustum(WIW2/WIW1, x*WIXO*WIW2/WIW1, WIYO*WIL2*WIA/WIW1);
+            hex_frustum(WIW2/WIW1, x*WIXO*WIW2/WIW1, WIYO*WIL2*WIA/WIW1);
         }
     }
-    // outer (vertical slope)
+    // outer (vertical slant)
     translate([x*((FBW3+WIL3)/2+WIL1+WIL2), -WIXO*WIW2, WIYO*WIL2]) {
         rotate(-x*90) scale([WIW2, WIL3, WIW2/WIA]) {
-            oct_frustum(WIW3/WIW2, 0, WIYO*WIL3*WIA/WIW2);
+            hex_frustum(WIW3/WIW2, 0, WIYO*WIL3*WIA/WIW2);
         }
     }
 }
@@ -135,29 +135,31 @@ module stabiliser(il, ol, iw, mw, ow, sl) {
     iw/mw/ow = inner/middle/outer width
     sl       = slant backwards
     */
+    // inner
     translate([0, -ol/2, 0]) {
-        scale([iw, il, STAR*iw]) oct_frustum(mw/iw, sl*il/(il+ol), 0);  // inner
+        scale([iw, il, STAR*iw]) hex_frustum(mw/iw, sl*il/(il+ol), 0);
     }
+    // outer
     translate([sl*il/(il+ol)*iw, il/2, 0]) {
-        scale([mw, ol, STAR*mw]) oct_frustum(ow/mw, sl*ol/(il+ol), 0);  // outer
+        scale([mw, ol, STAR*mw]) hex_frustum(ow/mw, sl*ol/(il+ol), 0);
     }
 }
 
 module engine() {
     // front half
     translate([0, ENL/4, 0]) {
-        scale([ENR*2, ENL/2, ENR*2]) oct_frustum();
+        scale([ENR*2, ENL/2, ENR*2]) oct_frustum(1);
     }
     // rear half
     translate([0, -ENL/4, 0]) rotate(180) {
         scale([ENR*2, ENL/2, ENR*2]) oct_frustum(WIW1/(WIA*ENR*2));
     }
     // propeller hub
-    translate([0, ENL/2+PHL/2, 0]) scale([ENR, PHL, ENR]) oct_frustum(1/2);
+    translate([0, ENL/2+PHL/2, 0]) scale([ENR, PHL, ENR]) hex_frustum();
     // propeller blades
     for(i = [0, 1, 2]) rotate([0, 30+i*120, 0]) {
         translate([PRR/2, ENL/2+THIN, 0]) rotate([0, 45, -90]) {
-            scale([THIN, PRR, THIN*2]) oct_frustum(1/2);
+            scale([THIN, PRR, THIN*2]) hex_wedge(1/2);
         }
     }
 }

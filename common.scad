@@ -224,7 +224,7 @@ module wedge(fw=1, fx=0, fz=0) {
     );
 }
 
-module rect_frustum(fw, fh, fx=0, fz=0) {
+module rect_frustum(fw=1, fh=1, fx=0, fz=0) {
     /*
     a frustum of a rectangular pyramid
     (a rectangular pyramid cut by a plane parallel to the base);
@@ -262,7 +262,116 @@ module rect_frustum(fw, fh, fx=0, fz=0) {
     );
 }
 
-module oct_pyramid(fx, fz) {
+module hex_pyramid(fx=0, fz=0) {
+    /*
+    args:
+        fx, fz = front X/Z offset from centerline
+    note: for a hexagon with width=height=1, the edge must be (sqrt(7)-1)/3
+    */
+    a = 1/2;
+    b = (sqrt(7)-1)/6;
+    polyhedron(
+        [
+            // rear
+            [-a, -a,  0],
+            [-b, -a,  a],
+            [ b, -a,  a],
+            [ a, -a,  0],
+            [ b, -a, -a],
+            [-b, -a, -a],
+            // front
+            [fx,  a, fz],
+        ],
+        [
+            [0, 1, 2, 3, 4, 5],
+            [0, 6, 1],
+            [1, 6, 2],
+            [2, 6, 3],
+            [3, 6, 4],
+            [4, 6, 5],
+            [5, 6, 0],
+        ]
+    );
+}
+
+module hex_wedge(fw=(sqrt(7)-1)/3, fx=0, fz=0) {
+    /*
+    fw     = front width
+             (default = smaller width of rear hexagon)
+    fx, fz = front X/Z offset from centerline
+    */
+    a = 1/2;
+    b = (sqrt(7)-1)/6;
+    c = fw/2;
+    polyhedron(
+        [
+            // rear
+            [  -a, -a,  0],
+            [  -b, -a,  a],
+            [   b, -a,  a],
+            [   a, -a,  0],
+            [   b, -a, -a],
+            [  -b, -a, -a],
+            // front
+            [fx-c,  a, fz],
+            [fx+c,  a, fz],
+        ],
+        [
+            [0,1,2,3,4,5],  // rear
+            [1,6,7,2],      // top
+            [4,7,6,5],      // bottom
+            [0,6,1],        // top    left
+            [2,7,3],        // top    right
+            [3,7,4],        // bottom right
+            [5,6,0],        // bottom left
+        ]
+    );
+}
+
+module hex_frustum(fs=(sqrt(7)-1)/3, fxo=0, fzo=0) {
+    /*
+    args:
+        fs       = front scale factor
+                   (default = smaller width of rear hexagon)
+        fxo, fzo = front X/Z offset from centerline
+    note: front face must have same width/height ratio as rear face;
+    otherwise side faces would not be planes
+    */
+    a =  1/2;
+    b =  (sqrt(7)-1)/6;
+    c = fs/2;
+    d = fs*(sqrt(7)-1)/6;
+    polyhedron(
+        [
+            // rear
+            [   -a, -a,     0],
+            [   -b, -a,     a],
+            [    b, -a,     a],
+            [    a, -a,     0],
+            [    b, -a,    -a],
+            [   -b, -a,    -a],
+            // front
+            [fxo-c,  a, fzo  ],
+            [fxo-d,  a, fzo+c],
+            [fxo+d,  a, fzo+c],
+            [fxo+c,  a, fzo  ],
+            [fxo+d,  a, fzo-c],
+            [fxo-d,  a, fzo-c],
+        ],
+        [
+            [0, 1, 2,3,4,5],  // rear
+            [6,11,10,9,8,7],  // front
+            [0, 6, 7,1],  // top left
+            [1, 7, 8,2],  // top
+            [2, 8, 9,3],  // top right
+            [0, 5,11,6],  // bottom left
+            [4,10,11,5],  // bottom
+            [3, 9,10,4],  // bottom right
+        ]
+    );
+}
+
+module oct_pyramid(fx=0, fz=0) {
     /*
     faces:
         1 regular octagon (vertical, rear)
@@ -300,7 +409,7 @@ module oct_pyramid(fx, fz) {
     );
 }
 
-module oct_wedge(fw=1, fx=0, fz=0) {
+module oct_wedge(fw=1/(1+1*sqrt(2)), fxo=0, fzo=0) {
     /*
     faces:
         1 regular octagon (vertical, rear)
@@ -308,8 +417,9 @@ module oct_wedge(fw=1, fx=0, fz=0) {
         6 isosceles triangles
     the front is a horizontal edge;
     args:
-        fw     = front edge width
-        fx, fz = front X/Z offset from centerline
+        fw       = front edge width
+                   (default = smaller width of rear octagon)
+        fxo, fzo = front X/Z offset from centerline
     */
     a =  1/(2+2*sqrt(2));  // small
     b =  1/2;              // big
@@ -317,17 +427,17 @@ module oct_wedge(fw=1, fx=0, fz=0) {
     polyhedron(
         [
             // rear
-            [  -b, -b, -a],
-            [  -b, -b,  a],
-            [  -a, -b,  b],
-            [   a, -b,  b],
-            [   b, -b,  a],
-            [   b, -b, -a],
-            [   a, -b, -b],
-            [  -a, -b, -b],
+            [   -b, -b,  -a],
+            [   -b, -b,   a],
+            [   -a, -b,   b],
+            [    a, -b,   b],
+            [    b, -b,   a],
+            [    b, -b,  -a],
+            [    a, -b,  -b],
+            [   -a, -b,  -b],
             // front
-            [fx-f,  b, fz],
-            [fx+f,  b, fz],
+            [fxo-f,  b, fzo],
+            [fxo+f,  b, fzo],
         ],
         [
             [0, 1, 2, 3, 4, 5, 6, 7],
@@ -343,55 +453,52 @@ module oct_wedge(fw=1, fx=0, fz=0) {
     );
 }
 
-module square_cupola(fw=1, fh=1, fxo=0, fzo=0) {
+module square_cupola(fw=1/(1+1*sqrt(2)), fh=1/(1+1*sqrt(2)), fxo=0, fzo=0) {
     /*
-    faces:
-        1 regular octagon (vertical, rear)
-        1 rectangle       (vertical, front)
-        4 trapezoids
-        4 isosceles triangles
+    rear: regular octagon, front: rectangle,
+    connected by trapezoids and triangles;
     args:
         fw, fh   = front width/height
+                   (default = smaller width&height of rear octagon)
         fxo, fzo = front X/Z offset from centerline
     */
-    ra =  1/(2+2*sqrt(2));  // rear small
-    rb =  1/2;              // rear big
-    y  =  1/2;
-    fx = fw/2;
-    fz = fh/2;
+    a =  1/2;
+    b =  1/(2+2*sqrt(2));
+    x = fw/2;
+    z = fh/2;
     polyhedron(
         [
             // rear
-            [-rb, -y, -ra],
-            [-rb, -y,  ra],
-            [-ra, -y,  rb],
-            [ ra, -y,  rb],
-            [ rb, -y,  ra],
-            [ rb, -y, -ra],
-            [ ra, -y, -rb],
-            [-ra, -y, -rb],
+            [   -a, -a,    -b],
+            [   -a, -a,     b],
+            [   -b, -a,     a],
+            [    b, -a,     a],
+            [    a, -a,     b],
+            [    a, -a,    -b],
+            [    b, -a,    -a],
+            [   -b, -a,    -a],
             // front
-            [fxo-fx, y, fzo-fz],
-            [fxo-fx, y, fzo+fz],
-            [fxo+fx, y, fzo+fz],
-            [fxo+fx, y, fzo-fz],
+            [fxo-x,  a, fzo-z],
+            [fxo-x,  a, fzo+z],
+            [fxo+x,  a, fzo+z],
+            [fxo+x,  a, fzo-z],
         ],
         [
-            [0, 1, 2, 3, 4, 5, 6, 7],
-            [8, 11, 10, 9],
-            [0, 8, 9, 1],
-            [1, 9, 2],
-            [2, 9, 10, 3],
-            [3, 10, 4],
-            [4, 10, 11, 5],
-            [5, 11, 6],
-            [6, 11, 8, 7],
-            [7, 8, 0],
+            [0, 1, 2,3,4,5,6,7],  // rear
+            [8,11,10,9],          // front
+            [0, 8, 9,1],          //        left
+            [2, 9,10,3],          // top
+            [4,10,11,5],          //        right
+            [6,11, 8,7],          // bottom
+            [1, 9, 2],            // top    left
+            [3,10, 4],            // top    right
+            [5,11, 6],            // bottom right
+            [7, 8, 0],            // bottom left
         ]
     );
 }
 
-module oct_frustum(fs=1, fx=0, fz=0) {
+module oct_frustum(fs=1/(1+1*sqrt(2)), fxo=0, fzo=0) {
     /*
     a frustum of an octagonal pyramid;
     X & Z centring doesn't depend on fx & fz;
@@ -400,37 +507,36 @@ module oct_frustum(fs=1, fx=0, fz=0) {
         2 regular octagons (vertical; front and rear)
         8 trapezoids
     args:
-        fs     = front width & height scale factor
-        fx, fz = front X/Z offset from centreline
+        fs       = front width & height scale factor
+                   (default = smaller width & height of rear octagon)
+        fxo, fzo = front X/Z offset from centreline
     note: front face must have same width/height ratio as rear face;
-    otherwise side faces would not be planes;
-    note: default settings = octagonal prism
+    otherwise side faces would not be planes
     */
-    ra =  1/(2+2*sqrt(2));  // rear  small
-    fa = fs/(2+2*sqrt(2));  // front small
-    y  =  1/2;
-    rb =  1/2;              // rear  big
-    fb = fs/2;              // front big
+    a  = 1/2;
+    b =  1/(2+2*sqrt(2));
+    c = fs/2;
+    d = fs/(2+2*sqrt(2));
     polyhedron(
         [
             // rear
-            [  -rb, -y,   -ra],
-            [  -rb, -y,    ra],
-            [  -ra, -y,    rb],
-            [   ra, -y,    rb],
-            [   rb, -y,    ra],
-            [   rb, -y,   -ra],
-            [   ra, -y,   -rb],
-            [  -ra, -y,   -rb],
+            [   -a, -a,    -b],
+            [   -a, -a,     b],
+            [   -b, -a,     a],
+            [    b, -a,     a],
+            [    a, -a,     b],
+            [    a, -a,    -b],
+            [    b, -a,    -a],
+            [   -b, -a,    -a],
             // front
-            [fx-fb,  y, fz-fa],
-            [fx-fb,  y, fz+fa],
-            [fx-fa,  y, fz+fb],
-            [fx+fa,  y, fz+fb],
-            [fx+fb,  y, fz+fa],
-            [fx+fb,  y, fz-fa],
-            [fx+fa,  y, fz-fb],
-            [fx-fa,  y, fz-fb],
+            [fxo-c,  a, fzo-d],
+            [fxo-c,  a, fzo+d],
+            [fxo-d,  a, fzo+c],
+            [fxo+d,  a, fzo+c],
+            [fxo+c,  a, fzo+d],
+            [fxo+c,  a, fzo-d],
+            [fxo+d,  a, fzo-c],
+            [fxo-d,  a, fzo-c],
         ],
         [
             [ 0,  1,  2,  3,  4,  5, 6, 7],
@@ -449,18 +555,22 @@ module oct_frustum(fs=1, fx=0, fz=0) {
 
 // demo
 scale(100) {
-    translate([ 0, 0,  2]) tetrahedron(1/4, 1/4);
-    translate([ 2, 0,  2]) tri_wedge(1/2, 1/8, 1/4);
-    translate([ 4, 0,  2]) tri_frustum(1/2, 1/6, 1/6);
+    translate([-2, 0,  3]) tetrahedron();
+    translate([ 0, 0,  3]) tri_wedge(1/2);
+    translate([ 2, 0,  3]) tri_frustum(1/2);
 
-    translate([-4, 0,  0]) sixth_cube();
-    translate([-2, 0,  0]) five_sixths_cube();
-    translate([ 0, 0,  0]) square_pyramid(1/4, 1/4);
-    translate([ 2, 0,  0]) wedge(1/2, 1/8, 1/4);
-    translate([ 4, 0,  0]) rect_frustum(1/2, 1/3, 1/6, 1/6);
+    translate([-4, 0,  1]) sixth_cube();
+    translate([-2, 0,  1]) five_sixths_cube();
+    translate([ 0, 0,  1]) square_pyramid();
+    translate([ 2, 0,  1]) wedge(1/2);
+    translate([ 4, 0,  1]) rect_frustum(1/2, 1/2);
 
-    translate([ 0, 0, -2]) oct_pyramid(1/4, 1/4);
-    translate([ 2, 0, -2]) oct_wedge(1/4, 1/6, 1/6);
-    translate([ 4, 0, -2]) square_cupola(1/3, 1/4, 1/8, 1/8);
-    translate([ 6, 0, -2]) oct_frustum(1/2, 1/6, 1/6);
+    translate([-3, 0, -1]) hex_pyramid();
+    translate([-1, 0, -1]) hex_wedge();
+    translate([ 3, 0, -1]) hex_frustum();
+
+    translate([-3, 0, -3]) oct_pyramid();
+    translate([-1, 0, -3]) oct_wedge();
+    translate([ 1, 0, -3]) square_cupola();
+    translate([ 3, 0, -3]) oct_frustum();
 }

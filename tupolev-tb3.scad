@@ -82,7 +82,7 @@ translate([0, FUL2+FUL3+(FUL1+FUL4)/2, (FUH2-FUH4)/2]) {
     color(FUC) front_fuselage();
     // gun
     color(OTC) translate([0, GUL/2, (FUH2+THIN)/2]) {
-        scale([THIN, GUL, THIN]) oct_frustum();
+        scale([THIN, GUL, THIN]) hex_frustum(1);
     }
 }
 // front-mid
@@ -105,7 +105,7 @@ translate([0, -(FUL4+FUL5)/2, 0]) {
     // guns
     color(OTC) for(x = [-1, 1]) {
         translate([x*(FUW4/3+GUL/2), x*FUL5*3/10, (FUH4+THIN)/2]) {
-            rotate(90) scale([THIN, GUL, THIN]) oct_frustum();
+            rotate(90) scale([THIN, GUL, THIN]) hex_frustum(1);
         }
     }
 }
@@ -124,12 +124,12 @@ translate([0, -FUL5-FUL6-(FUL4+FUL7)/2, (FUH4-FUH7)/2]) {
 color(PLC) translate([0, 0, (WIW1/WIA-FUH4)/2]) for(x = [-1, 1]) {
     // inner
     translate([x*(FUW4+WIL1)/2, 0, 0]) {
-        scale([WIL1, WIW1, WIW1/WIA]) rotate(90) oct_frustum();
+        scale([WIL1, WIW1, WIW1/WIA]) rotate(90) hex_frustum(1);
     }
     // outer
     translate([x*((FUW4+WIL2)/2+WIL1), 0, 0]) {
         rotate(-x*90) scale([WIW1, WIL2, WIW1/WIA]) {
-            oct_frustum(WIW2/WIW1, 0, WTSL);
+            hex_frustum(WIW2/WIW1, 0, WTSL);
         }
     }
 }
@@ -139,14 +139,14 @@ color(PLC) translate([0, -FUL5-FUL6-(FUL4+FUL7)/2, (FUH4-FUH7)/2]) {
     for(x = [-1, 1])  {
         translate([x*(FUW7+HSTL)/2, 0, (FUH7-THIN)/2]) {
             rotate([0, -90+x*90, -x*90]) scale([FUL7, HSTL, THIN]) {
-                oct_frustum(HSTW2/FUL7, 1/2-(HSTW2/2+20)/FUL7, 0);
+                hex_frustum(HSTW2/FUL7, 1/2-(HSTW2/2+20)/FUL7, 0);
             }
         }
     }
     // vertical
     translate([0, 0, (FUH7+VSTL)/2]) rotate([90, 0, -90]) {
         scale([FUL7, VSTL, THIN]) {
-            oct_frustum(VSTW2/FUL7, 1/2-(VSTW2/2+20)/FUL7, 0);
+            hex_frustum(VSTW2/FUL7, 1/2-(VSTW2/2+20)/FUL7, 0);
         }
     }
 }
@@ -217,15 +217,16 @@ module engine() {
     translate([0, ENL/4, 0]) {
         scale([ENW, ENL/2, ENH]) rect_frustum(1, 1/2, 0, 1/4);
     }
-    // propeller hub
-    translate([0, ENL/2+PHL/2, PHR]) {
-        scale([PHR*2, PHL, PHR*2]) oct_frustum(1/2);
-    }
-    // propeller blades
+    // propeller
     translate([0, (ENL+PHL)/2, PHR]) for(x = [0, 1]) {
-        rotate([0, 30+x*180, 0])
-            translate([PBL/2, 0, 0])
-            rotate([0,45,-90]) scale([PBT, PBL, PBW]) oct_frustum(1/2);
+        rotate([0, 30+x*180, 0]) {
+            // hub
+            scale([PHR*2, PHL, PHR*2]) square_cupola();
+            // blades
+            translate([PBL/2, 0, 0]) rotate([0, 45, -90]) {
+                scale([PBW, PBL, PBT]) hex_wedge();
+            }
+        }
     }
 }
 
@@ -236,9 +237,11 @@ module landing_gear() {
     translate([0, 0, -GEH-THIN/2]) {
         // horizontal beam
         cube([THIN, GEL, THIN], center=true);
+        // diagonal beam
+        translate([(-THIN-FUW4)/2, 0, 0]) scale([FUW4, THIN, THIN]) rotate(90) rect_frustum(1, 1, 0, (GEH+THIN)/THIN);
         // wheels
         translate([THIN, 0, 0]) for(x = [-1, 1]) translate([0, x*GEL/2, 0]) {
-            rotate(x*90) scale([WHR*2, THIN, WHR*2]) oct_frustum();
+            rotate(x*90) scale([WHR*2, THIN, WHR*2]) oct_frustum(1);
         }
     }
 }

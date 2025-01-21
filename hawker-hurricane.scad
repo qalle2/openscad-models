@@ -1,6 +1,8 @@
 /* Hawker Hurricane;
 every module is centered at [0, 0, 0] */
 
+use <common.scad>
+
 /*
 Fuselage parts:
     1. octagonal frustum, front of wings
@@ -27,11 +29,12 @@ FUVS3 = -1/10;  // vertical slant (of FUH2)
 // wings (W=width=X, L=length=Y, T=thickness=Z, 1-3=inner to outer)
 WIW1 = 180;
 WIL1 = 380;
-WIT1 = 70;
+WIT1 =  70;
 WIW2 = 620;
 WIL2 = 190;
-WIW3 = 80;
-WIL3 = 80;
+WIW3 =  80;
+WIL3 =  80;
+WHS  =  40;  // horizontal slant
 
 /*
 cockpit; parts:
@@ -46,7 +49,7 @@ COL1 =   30;
 COL2 =  150;
 COL3 =   60;
 COL4 =  200;
-COH  =   40;
+COH  =   50;
 
 // horizontal stabilisers (W=width=X, L=length=Y, T=thickness=Z)
 HSTW1 =  190;
@@ -58,17 +61,13 @@ HSTL3 =   60;
 HSTSL =   10;  // horizontal slant from centerline
 
 // vertical stabiliser (L=length=Y, H=height=Z, T=thickness=X)
-VSTL1 = FUL4;    // bottom
-VSTL2 = FUL4/3;  // top
 VSTH1 = 170;     // rear
 VSTH2 = 125;     // front
-VSTT  = FUW4;
 
 // rudder (L=length=Y, H=height=Z, T=thickness=X)
 RUL  = 80;                  // length
 RUH1 = FUH4+VSTH1;          // height 1 (front)
 RUH2 = FUH4-VSTH1+2*VSTH2;  // height 2 (rear)
-RUT  = FUW4;
 
 // propeller
 PHR = FUW1/2;  // hub radius
@@ -103,7 +102,7 @@ module hurricane() {
     // wings
     color(PLC) for(x = [-1, 1]) {
         translate([x*(WIW1+WIW2+WIW3+FBW2)/2, (-FUL1+FUL3+FUL4)/2, (WIT1-FUH2)/2]) {
-            rotate(-x*90) wing(WIL1, WIL2, WIL3, WIW1, WIW2, WIW3, WIT1);
+            rotate(-x*90) wing(WIL1, WIL2, WIL3, WIW1, WIW2, WIW3, WIT1, -x*WHS);
         }
     }
     // stabilisers and rudder
@@ -114,11 +113,11 @@ module hurricane() {
         }
         // vertical stabiliser
         translate([0, 0, (FUH4+VSTH1)/2]) {
-            vertical_stabiliser(VSTT, VSTL1, VSTL2, VSTH1, VSTH2);
+            vertical_stabiliser(FUW4, FUL4, VSTH1, VSTH2);
         }
         // rudder
         translate([0, (-FUL4-RUL)/2, (RUH1-FUH4)/2]) {
-            rudder(RUT, RUL, RUH1, RUH2);
+            rudder(FUW4, RUL, RUH1, RUH2);
         }
     }
     // propeller
@@ -138,129 +137,22 @@ module fuselage(whr, w4, l1, l2, l3, l4, h1, h2, h3, h4, vs3) {
         h1...h3 = height             (front to rear)
         vs3     = vertical slant     (from centerline; mid-rear only)
     */
-    x1  =     w4/2;
-    x2a = whr*h3/(2+2*sqrt(2));
-    x2b = whr*h3/2;
-    x3a = whr*h2/(2+2*sqrt(2));
-    x3b = whr*h2/2;
-    x4a = whr*h1/(2+2*sqrt(2));
-    x4b = whr*h1/2;
-    //
-    y1 = (-l1-l2-l3-l4)/2;
-    y2 = (-l1-l2-l3+l4)/2;
-    y3 = (-l1-l2+l3+l4)/2;
-    y4 = (-l1+l2+l3+l4)/2;
-    y5 = ( l1+l2+l3+l4)/2;
-    //
-    z0a = -h4/2             + vs3;
-    z0b =  h4/2             + vs3;
-    z1a = -h3/(2+2*sqrt(2)) + vs3;
-    z1b = -h3/2             + vs3;
-    z2a =  h3/(2+2*sqrt(2)) + vs3;
-    z2b =  h3/2             + vs3;
-    z3a = -h2/(2+2*sqrt(2));
-    z3b = -h2/2;
-    z4a =  h2/(2+2*sqrt(2));
-    z4b =  h2/2;
-    z5a = -h1/(2+2*sqrt(2));
-    z5b = -h1/2;
-    z6a =  h1/(2+2*sqrt(2));
-    z6b =  h1/2;
-    //
-    // start indexes of vertex groups (rear to front)
-    vg1 =  0;
-    vg2 =  4;
-    vg3 = 12;
-    vg4 = 20;
-    vg5 = 28;
-    //
-    polyhedron(
-        [
-            // group 1
-            [ -x1, y1, z0a],
-            [ -x1, y1, z0b],
-            [  x1, y1, z0b],
-            [  x1, y1, z0a],
-            // group 2
-            [-x2b, y2, z1a],
-            [-x2b, y2, z2a],
-            [-x2a, y2, z2b],
-            [ x2a, y2, z2b],
-            [ x2b, y2, z2a],
-            [ x2b, y2, z1a],
-            [ x2a, y2, z1b],
-            [-x2a, y2, z1b],
-            // group 3
-            [-x3b, y3, z3a],
-            [-x3b, y3, z4a],
-            [-x3a, y3, z4b],
-            [ x3a, y3, z4b],
-            [ x3b, y3, z4a],
-            [ x3b, y3, z3a],
-            [ x3a, y3, z3b],
-            [-x3a, y3, z3b],
-            // group 4
-            [-x3b, y4, z3a],
-            [-x3b, y4, z4a],
-            [-x3a, y4, z4b],
-            [ x3a, y4, z4b],
-            [ x3b, y4, z4a],
-            [ x3b, y4, z3a],
-            [ x3a, y4, z3b],
-            [-x3a, y4, z3b],
-            // group 5
-            [-x4b, y5, z5a],
-            [-x4b, y5, z6a],
-            [-x4a, y5, z6b],
-            [ x4a, y5, z6b],
-            [ x4b, y5, z6a],
-            [ x4b, y5, z5a],
-            [ x4a, y5, z5b],
-            [-x4a, y5, z5b],
-        ],
-        [
-            // rear end (vertical; vertex group 1)
-            [vg1+0, vg1+1, vg1+2, vg1+3],
-            // rear section (vertex groups 1 & 2)
-            [vg1+0, vg2+0, vg2+1, vg1+1],
-            [vg1+1, vg2+1, vg2+2],
-            [vg1+1, vg2+2, vg2+3, vg1+2],
-            [vg1+2, vg2+3, vg2+4],
-            [vg1+2, vg2+4, vg2+5, vg1+3],
-            [vg1+3, vg2+5, vg2+6],
-            [vg1+3, vg2+6, vg2+7, vg1+0],
-            [vg1+0, vg2+7, vg2+0],
-            // mid-rear section (vertex groups 2 & 3)
-            [vg2+0, vg3+0, vg3+1, vg2+1],
-            [vg2+1, vg3+1, vg3+2, vg2+2],
-            [vg2+2, vg3+2, vg3+3, vg2+3],
-            [vg2+3, vg3+3, vg3+4, vg2+4],
-            [vg2+4, vg3+4, vg3+5, vg2+5],
-            [vg2+5, vg3+5, vg3+6, vg2+6],
-            [vg2+6, vg3+6, vg3+7, vg2+7],
-            [vg2+7, vg3+7, vg3+0, vg2+0],
-            // mid-front section (vertex groups 3 & 4)
-            [vg3+0, vg4+0, vg4+1, vg3+1],
-            [vg3+1, vg4+1, vg4+2, vg3+2],
-            [vg3+2, vg4+2, vg4+3, vg3+3],
-            [vg3+3, vg4+3, vg4+4, vg3+4],
-            [vg3+4, vg4+4, vg4+5, vg3+5],
-            [vg3+5, vg4+5, vg4+6, vg3+6],
-            [vg3+6, vg4+6, vg4+7, vg3+7],
-            [vg3+7, vg4+7, vg4+0, vg3+0],
-            // front section (vertex groups 4 & 5)
-            [vg4+0, vg5+0, vg5+1, vg4+1],
-            [vg4+1, vg5+1, vg5+2, vg4+2],
-            [vg4+2, vg5+2, vg5+3, vg4+3],
-            [vg4+3, vg5+3, vg5+4, vg4+4],
-            [vg4+4, vg5+4, vg5+5, vg4+5],
-            [vg4+5, vg5+5, vg5+6, vg4+6],
-            [vg4+6, vg5+6, vg5+7, vg4+7],
-            [vg4+7, vg5+7, vg5+0, vg4+0],
-            // front end (vertical; vertex group 5)
-            [vg5+0, vg5+7, vg5+6, vg5+5, vg5+4, vg5+3, vg5+2, vg5+1],
-        ]
-    );
+    // rear
+    translate([0, (-l1-l2-l3)/2, vs3]) rotate(180) {
+        scale([h3*whr, l4, h3]) square_cupola(FUW4/(h3*whr), h4/h3);
+    }
+    // mid-rear
+    translate([0, (-l1-l2+l4)/2, 0]) rotate(180) {
+        scale([h2*whr, l3, h2]) oct_frustum(h3/h2, 0, vs3/h2);
+    }
+    // mid-front
+    translate([0, (-l1+l3+l4)/2, 0]) {
+        scale([h2*whr, l2, h2]) oct_frustum(1);
+    }
+    // front
+    translate([0, (l2+l3+l4)/2, 0]) {
+        scale([h2*whr, l1, h2]) oct_frustum(h1/h2);
+    }
 }
 
 module cockpit_rearhalf(w1, w2a, w2b, l1, l2, h1, h2) {
@@ -355,17 +247,21 @@ module cockpit_fronthalf(w1, w2, l1, l2, h) {
     );
 }
 
-module wing(w1, w2, w3, l1, l2, l3, t1) {
+module wing(w1, w2, w3, l1, l2, l3, t1, hs) {
     /*
     root towards viewer;
     args:
         w1...w3 = width     (inner to outer)
         l1...l3 = length    (inner to outer)
         t1      = thickness (inner)
+        hs      = horizontal slant
     */
     x1 = w1/2;
     x2 = w2/2;
     x3 = w3/2;
+    //
+    hs1 = l2/(l2+l3)*hs;
+    hs2 =            hs;
     //
     y1 = (-l1-l2-l3)/2;
     y2 = ( l1-l2-l3)/2;
@@ -392,29 +288,31 @@ module wing(w1, w2, w3, l1, l2, l3, t1) {
             [ x2, y2, -z1],
             [-x2, y2, -z1],
             // mid-front (12-15)
-            [-x2, y3,  z2],
-            [-x2, y3,  z1],
-            [ x2, y3,  z1],
-            [ x2, y3,  z2],
+            [hs1-x2, y3,  z2],
+            [hs1-x2, y3,  z1],
+            [hs1+x2, y3,  z1],
+            [hs1+x2, y3,  z2],
             // front (16-17)
-            [-x3, y4,  z1],
-            [ x3, y4,  z1],
+            [hs2-x3, y4,  z1],
+            [hs2+x3, y4,  z1],
         ],
         [
             [ 0, 1, 2, 3, 4, 5],  // rear
             [ 1,13,16,17,14, 2],  // top
             [10,15,17,16,12,11],  // bottom front
-            [ 0, 6,13, 1],  // top left
-            [ 2,14, 8, 3],  // top right
-            [ 3, 8,10, 4],  // rear bottom right
-            [ 4,10,11, 5],  // rear bottom
-            [ 5,11, 6, 0],  // rear bottom left
-            [ 6,12,13],     // mid left
-            [ 8,14,15],     // mid right
-            [ 8,15,10],     // mid bottom right
-            [11,12, 6],     // mid bottom left
-            [12,16,13],     // front left
-            [14,17,15],     // front right
+            [ 3, 8,10, 4],  // bottom rear  right
+            [ 4,10,11, 5],  // bottom rear
+            [ 5,11, 6, 0],  // bottom rear  left
+            [ 0, 6, 1],     // top    rear  left
+            [ 2, 8, 3,],    // top    rear  right
+            [ 1, 6,13],     // top    front left
+            [ 2,14, 8],     // top    front right
+            [ 6,12,13],     // mid    mid   left
+            [ 8,14,15],     // mid    mid   right
+            [12,16,13],     // mid    front left
+            [14,17,15],     // mid    front right
+            [11,12, 6],     // bottom mid   left
+            [ 8,15,10],     // bottom mid   right
         ]
     );
 }
@@ -476,171 +374,54 @@ module horizontal_stabiliser(w1, w2, w3, l1, l2, t1, hs=0) {
     );
 }
 
-module vertical_stabiliser(w, l1, l2, h1, h2) {
+module vertical_stabiliser(w, le, h1, h2) {
     /*
     root towards viewer;
     args:
         w      = width
-        l1, l2 = length (bottom, top)
+        le     = bottom length (top length = this / 3)
         h1, h2 = height (rear, front)
     */
-    x = w/2;
-    //
-    y1 = -l1/2;
-    y2 = -l1/2+l2;
-    y3 =  l2/2;
-    y4 =  l1/2;
-    //
-    z1 = -h1/2;
-    z2 = -h1/2+h2;
-    z3 =  h1/2;
-    //
-    polyhedron(
-        [
-            // rear (0-4)
-            [-x, y1, z1],
-            [-x, y1, z2],
-            [ 0, y1, z3],
-            [ x, y1, z2],
-            [ x, y1, z1],
-            // mid-rear (5-7)
-            [-x, y2, z2],
-            [ 0, y2, z3],
-            [ x, y2, z2],
-            // mid-front (8-10)
-            [-x, y3, z1],
-            [ x, y3, z1],
-            [ 0, y3, z2],
-            // front (11)
-            [ 0, y4, z1],
-        ],
-        [
-            [0, 4, 9,11, 8],  // bottom
-            [0, 1, 2, 3, 4],  //        rear
-            [0, 8, 5, 1],     // bottom rear  left
-            [3, 7, 9, 4],     // bottom rear  right
-            [5, 8,11,10],     // bottom front left
-            [7,10,11, 9],     // bottom front right
-            [1, 5, 6, 2],     // top    rear  left
-            [2, 6, 7, 3],     // top    rear  right
-            [5,10, 6],        // top    front left
-            [6,10, 7],        // top    front right
-        ]
-    );
+    
+    // bottom rear (full-width part)
+    translate([0, -le/6, (-h1+h2)/2]) scale([w, le*2/3, h2]) {
+        rotate([90, 0, 0]) rect_frustum(1, 1/2, 0, 1/4);
+    }
+    // top rear
+    translate([0, -le/3, h2/2]) scale([w, le/3, h1-h2]) {
+        rotate([90, 0, 90]) wedge();
+    }
+    // bottom front (triangular prism)
+    translate([0, 0, (-h1+h2)/2]) scale([w, le/3, h2]) {
+        rotate([-90, 0, 0]) tri_frustum(1, 0, 1);
+    }
+    // top front
+    translate([0, 0, h2/2]) scale([w, le/3, h1-h2]) {
+        rotate([90, 0, 180]) tetrahedron(0, -1/2);
+    }
 }
 
 module rudder(w, l, h1, h2) {
-    /*
-    args:
-        w     = width
-        l     = length
-        h1/h2 = larger/smaller height
-    */
-    x  =  w/2;
-    y  =  l/2;
-    z1 = h1/2;
-    z2 = h2/2;
-    //
-    polyhedron(
-        [
-            // rear (0-1)
-            [ 0, -y, -z2],
-            [ 0, -y,  z2],
-            // front (2-6)
-            [-x,  y, -z1],
-            [-x,  y,  z2],
-            [ 0,  y,  z1],
-            [ x,  y,  z2],
-            [ x,  y, -z1],
-        ],
-        [
-            [2,6,5,4,3],  // front (root)
-            [0,2,3,1],    // bottom left
-            [0,1,5,6],    // bottom right
-            [0,6,2],      // bottom
-            [1,3,4],      // top    left
-            [1,4,5],      // top    right
-        ]
-    );
+    // w = width, l = length, h1/h2 = larger/smaller height
+    scale([w, l, h2]) rotate([180, 90, 0]) wedge();  // middle
+    translate([0, 0, (-h1-h2)/4]) scale([w, l, (h1-h2)/2]) {
+        rotate(180) square_pyramid(0, 1/2);  // bottom
+    }
+    translate([0, 0, ( h1+h2)/4]) scale([w, l, (h1-h2)/2]) {
+        rotate(180) tetrahedron(0, -1/2);  // top
+    }
 }
 
 module propeller(hl, hr, bl, bw, bt) {
     /*
     args:
-        hl, hr     = hub    length, radius
-        bl, bw, bt = bladde length, width, thickness
+        hl, hr     = hub   length, radius
+        bl, bw, bt = blade length, width, thickness
     */
-    propeller_hub(hl, hr);
+    // hub
+    scale([hr*2, hl, hr*2]) square_cupola();
+    // blades
     for(x = [0, 1]) rotate([0, x*180, 0]) translate([bl/2, 0, 0]) {
-        rotate([0, -45, -90]) propeller_blade(bl, bw, bt);
+        rotate([0, -45, -90]) scale([bw, bl, bt]) hex_wedge(1/2);
     }
-}
-
-module propeller_hub(l, r) {
-    /*
-    a square cupola; base towards viewer;
-    args: length, radius
-    */
-    x = r/(1+1*sqrt(2));
-    y = l/2;
-    z = r/(1+1*sqrt(2));
-    //
-    polyhedron(
-        [
-            // rear (0-7)
-            [-r, -y, -z],
-            [-r, -y,  z],
-            [-x, -y,  r],
-            [ x, -y,  r],
-            [ r, -y,  z],
-            [ r, -y, -z],
-            [ x, -y, -r],
-            [-x, -y, -r],
-            // front (8-11)
-            [-x,  y, -z],
-            [-x,  y,  z],
-            [ x,  y,  z],
-            [ x,  y, -z],
-        ],
-        [
-            [0, 1, 2,3,4,5,6,7],  // rear
-            [8,11,10,9],          // front
-            // sides
-            [0, 8, 9,1], [1, 9,2],
-            [2, 9,10,3], [3,10,4],
-            [4,10,11,5], [5,11,6],
-            [6,11, 8,7], [7, 8,0],
-        ]
-    );
-}
-
-module propeller_blade(l, w, t) {
-    /*
-    a rectangular wedge; root towards viewer;
-    args: length, width, thickness
-    */
-    x1 = w/2;
-    x2 = w/4;
-    y  = l/2;
-    z  = t/2;
-    //
-    polyhedron(
-        [
-            // rear (0-3)
-            [-x1, -y, -z],
-            [-x1, -y,  z],
-            [ x1, -y,  z],
-            [ x1, -y, -z],
-            // front (4-5)
-            [-x2,  y,  0],
-            [ x2,  y,  0],
-        ],
-        [
-            [0,1,2,3],  // rear
-            [0,3,5,4],  // bottom
-            [1,4,5,2],  // top
-            [0,4,1],    // left
-            [2,5,3],    // right
-        ]
-    );
 }
