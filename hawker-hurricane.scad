@@ -1,5 +1,5 @@
 /* Hawker Hurricane;
-every module is centered at [0, 0, 0] */
+every module is centred at [0, 0, 0] */
 
 use <common.scad>
 
@@ -58,7 +58,7 @@ HSTT1 =   30;
 HSTW2 =   60;
 HSTL2 =  120;
 HSTL3 =   60;
-HSTSL =   10;  // horizontal slant from centerline
+HSTSL =   10;  // horizontal slant
 
 // vertical stabiliser (L=length=Y, H=height=Z, T=thickness=X)
 VSTH1 = 170;     // rear
@@ -82,7 +82,10 @@ PLC = [.8, .8, .5];  // wings and stabilisers
 OTC = [.5, .8, .8];  // other parts
 
 module hurricane() {
-    /* draws everything */
+    /*
+    Hawker Hurricane;
+    args: none but uses global constants;
+    */
     // fuselage
     color(FUC) fuselage(FUA, FUW4, FUL1, FUL2, FUL3, FUL4, FUH1, FUH2, FUH3, FUH4, FUVS3*FUH2);
     // rear half of cockpit
@@ -117,7 +120,7 @@ module hurricane() {
         }
         // rudder
         translate([0, (-FUL4-RUL)/2, (RUH1-FUH4)/2]) {
-            rudder(FUW4, RUL, RUH1, RUH2);
+            rotate(180) rudder(FUW4, RUL, RUH1, RUH2);
         }
     }
     // propeller
@@ -130,41 +133,45 @@ hurricane();
 
 module fuselage(whr, w4, l1, l2, l3, l4, h1, h2, h3, h4, vs3) {
     /*
+    shape: four sections longitudinally;
     args:
         whr     = width/height ratio (front to mid-rear)
         w4      = width              (rear only)
         l1...l4 = length             (front to rear)
         h1...h3 = height             (front to rear)
-        vs3     = vertical slant     (from centerline; mid-rear only)
+        vs3     = vertical slant     (mid-rear only)
+    TODO: order of args should be rear to front
     */
-    // rear
+    // rear (square cupola)
     translate([0, (-l1-l2-l3)/2, vs3]) rotate(180) {
         scale([h3*whr, l4, h3]) square_cupola(FUW4/(h3*whr), h4/h3);
     }
-    // mid-rear
+    // mid-rear (octagonal frustum)
     translate([0, (-l1-l2+l4)/2, 0]) rotate(180) {
         scale([h2*whr, l3, h2]) oct_frustum(h3/h2, 0, vs3/h2);
     }
-    // mid-front
+    // mid-front (octagonal prism)
     translate([0, (-l1+l3+l4)/2, 0]) {
         scale([h2*whr, l2, h2]) oct_frustum(1);
     }
-    // front
+    // front (square frustum)
     translate([0, (l2+l3+l4)/2, 0]) {
         scale([h2*whr, l1, h2]) oct_frustum(h1/h2);
     }
 }
 
-module cockpit_rearhalf(w1, w2a, w2b, l1, l2, h1, h2) {
+module cockpit_rearhalf(w1, w2, w3, l1, l2, h1, h2) {
     /*
+    shape: trapezoidal prism and trapezoidal wedge;
     args:
-        w1, w2a, w2b = width  at rear, front bottom, front top
-        l1, l2       = length at rear, front
-        h1, h2       = height at rear, front
+        w1...w3 = width  (rear, front bottom, front top)
+        l1, l2  = length (rear, front)
+        h1, h2  = height (rear, front)
+    TODO: move primitives to common.scad
     */
-    x1  = w1/2;
-    x2a = w2a/2;
-    x2b = w2b/2;
+    x1 = w1/2;
+    x2 = w2/2;
+    x3 = w3/2;
     //
     y1 = (-l1-l2)/2;
     y2 = ( l1-l2)/2;
@@ -180,15 +187,15 @@ module cockpit_rearhalf(w1, w2a, w2b, l1, l2, h1, h2) {
             [-x1, y1, z1],
             [ x1, y1, z1],
             // mid
-            [-x2a, y2, z2],
-            [-x2b, y2, z3],
-            [ x2b, y2, z3],
-            [ x2a, y2, z2],
+            [-x2, y2, z2],
+            [-x3, y2, z3],
+            [ x3, y2, z3],
+            [ x2, y2, z2],
             // front
-            [-x2a, y3, z2],
-            [-x2b, y3, z3],
-            [ x2b, y3, z3],
-            [ x2a, y3, z2],
+            [-x2, y3, z2],
+            [-x3, y3, z3],
+            [ x3, y3, z3],
+            [ x2, y3, z2],
         ],
         [
             [0,3,4,1],  // rear  top
@@ -206,10 +213,12 @@ module cockpit_rearhalf(w1, w2a, w2b, l1, l2, h1, h2) {
 
 module cockpit_fronthalf(w1, w2, l1, l2, h) {
     /*
+    shape: trapezoidal prism and trapezoidal wedge;
     args:
-        w1, w2 = bottom/top width
-        l1, l2 = front/rear length
+        w1, w2 = width  (bottom, top)
+        l1, l2 = length (front, rear)
         h      = height
+    TODO: move primitives to common.scad
     */
     x1 =       w2/2;
     x2 =       w1/2;
@@ -240,7 +249,7 @@ module cockpit_fronthalf(w1, w2, l1, l2, h) {
             [0,4,5,1],     // rear left
             [2,6,7,3],     // rear right
             [1,5,6,2],     // top
-            [5,8,9,6],     // front center
+            [5,8,9,6],     // front centre
             [4,8,5],       // front left
             [6,9,7],       // front right
         ]
@@ -249,10 +258,11 @@ module cockpit_fronthalf(w1, w2, l1, l2, h) {
 
 module wing(w1, w2, w3, l1, l2, l3, t1, hs) {
     /*
-    tip has zero thickness;
-    top is horizontal;
-    bottom has the same slant in middle and outer sections;
     root towards viewer;
+    shape:
+        tip:    zero thickness
+        top:    horizontal
+        bottom: same slant in middle and outer sections
     args:
         w1...w3 = width     (inner to outer)
         l1...l3 = length    (inner to outer)
@@ -277,13 +287,14 @@ module wing(w1, w2, w3, l1, l2, l3, t1, hs) {
 
 module horizontal_stabiliser(w1, w2, w3, l1, l2, t1, hs=0) {
     /*
-    tip has zero thickness;
-    top is horizontal;
-    bottom has the same slant in middle and outer sections;
     root towards viewer;
+    shape:
+        tip:    zero thickness
+        top:    horizontal
+        bottom: same slant in inner and outer sections
     args:
         w1...w3 = width     (inner to outer)
-        l1...l2 = length    (inner to outer)
+        l1, l2  = length    (inner to outer)
         t1      = thickness (inner)
         hs      = horizontal slant
     */
@@ -304,7 +315,7 @@ module vertical_stabiliser(w, le, h1, h2) {
     root towards viewer;
     args:
         w      = width
-        le     = bottom length (top length = this / 3)
+        le     = length (bottom; top = this / 3)
         h1, h2 = height (rear, front)
     */
 
@@ -326,14 +337,23 @@ module vertical_stabiliser(w, le, h1, h2) {
     }
 }
 
-module rudder(w, l, h1, h2) {
-    // w = width, l = length, h1/h2 = larger/smaller height
-    scale([w, l, h2]) rotate([180, 90, 0]) wedge();  // middle
-    translate([0, 0, (-h1-h2)/4]) scale([w, l, (h1-h2)/2]) {
-        rotate(180) square_pyramid(0, 1/2);  // bottom
+module rudder(w, le, h1, h2) {
+    /*
+    root towards viewer;
+    args:
+        w      = width
+        le     = length
+        h1, h2 = height (larger, smaller)
+    */
+    // middle
+    scale([w, le, h2]) rotate([0, 90, 0]) wedge();
+    // bottom
+    translate([0, 0, (-h1-h2)/4]) scale([w, le, (h1-h2)/2]) {
+        square_pyramid(0, 1/2);
     }
-    translate([0, 0, ( h1+h2)/4]) scale([w, l, (h1-h2)/2]) {
-        rotate(180) tetrahedron(0, -1/2);  // top
+    // top
+    translate([0, 0, (h1+h2)/4]) scale([w, le, (h1-h2)/2]) {
+        tetrahedron(0, -1/2);
     }
 }
 
