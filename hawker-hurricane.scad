@@ -144,7 +144,7 @@ module fuselage(whr, w4, l1, l2, l3, l4, h1, h2, h3, h4, vs3) {
     */
     // rear (square cupola)
     translate([0, (-l1-l2-l3)/2, vs3]) rotate(180) {
-        scale([h3*whr, l4, h3]) square_cupola(FUW4/(h3*whr), h4/h3);
+        scale([h3*whr, l4, h3]) rect_cupola(FUW4/(h3*whr), h4/h3);
     }
     // mid-rear (octagonal frustum)
     translate([0, (-l1-l2+l4)/2, 0]) rotate(180) {
@@ -162,20 +162,22 @@ module fuselage(whr, w4, l1, l2, l3, l4, h1, h2, h3, h4, vs3) {
 
 module cockpit_rearhalf(w1, w2, w3, l1, l2, h1, h2) {
     /*
-    shape: trapezoidal prism and trapezoidal wedge;
     args:
         w1...w3 = width  (rear, front bottom, front top)
         l1, l2  = length (rear, front)
         h1, h2  = height (rear, front)
-    TODO: move primitives to common.scad
     */
+    // front (trapezoidal prism or rectangular frustum)
+    translate([0, l1/2, (h1-h2)/2]) scale([w2, l2, h2]) {
+        rotate([90, 0, 0]) rect_frustum(w3/w2);
+    }
+    // rear (trapezoidal wedge)
     x1 = w1/2;
     x2 = w2/2;
     x3 = w3/2;
     //
     y1 = (-l1-l2)/2;
     y2 = ( l1-l2)/2;
-    y3 = ( l1+l2)/2;
     //
     z1 = -h1/2;
     z2 =  h1/2-h2;
@@ -183,30 +185,21 @@ module cockpit_rearhalf(w1, w2, w3, l1, l2, h1, h2) {
     //
     polyhedron(
         [
-            // rear
+            // rear (0-1)
             [-x1, y1, z1],
             [ x1, y1, z1],
-            // mid
+            // mid (2-5)
             [-x2, y2, z2],
             [-x3, y2, z3],
             [ x3, y2, z3],
             [ x2, y2, z2],
-            // front
-            [-x2, y3, z2],
-            [-x3, y3, z3],
-            [ x3, y3, z3],
-            [ x2, y3, z2],
         ],
         [
+            [2,5,4,3],  // front
             [0,3,4,1],  // rear  top
             [0,1,5,2],  // rear  bottom
             [0,2,3],    // rear  left
             [1,4,5],    // rear  right
-            [3,7,8,4],  // front top
-            [2,5,9,6],  // front bottom
-            [2,6,7,3],  // front left
-            [4,8,9,5],  // front right
-            [6,9,8,7],  // front
         ]
     );
 }
@@ -218,42 +211,19 @@ module cockpit_fronthalf(w1, w2, l1, l2, h) {
         w1, w2 = width  (bottom, top)
         l1, l2 = length (front, rear)
         h      = height
-    TODO: move primitives to common.scad
     */
-    x1 =       w2/2;
-    x2 =       w1/2;
-    y1 = (-l1-l2)/2;
-    y2 = (-l1+l2)/2;
-    y3 = ( l1+l2)/2;
-    z  =        h/2;
-    //
-    polyhedron(
-        [
-            // rear
-            [-x2, y1, -z],
-            [-x1, y1,  z],
-            [ x1, y1,  z],
-            [ x2, y1, -z],
-            // mid
-            [-x2, y2, -z],
-            [-x1, y2,  z],
-            [ x1, y2,  z],
-            [ x2, y2, -z],
-            // front
-            [-x1, y3, -z],
-            [ x1, y3, -z],
-        ],
-        [
-            [0,3,7,9,8,4], // bottom
-            [0,1,2,3],     // rear
-            [0,4,5,1],     // rear left
-            [2,6,7,3],     // rear right
-            [1,5,6,2],     // top
-            [5,8,9,6],     // front centre
-            [4,8,5],       // front left
-            [6,9,7],       // front right
-        ]
-    );
+    // rear (rectangular frustum or trapezoidal prism)
+    translate([0, -l1/2, 0]) scale([w1, l2, h]) {
+        rotate([90, 0, 0]) rect_frustum(w2/w1);
+    }
+    // front center (rectangular wedge)
+    translate([0, l2/2]) scale([w2, l1, h]) {
+        rotate([90, 0, 0]) rect_wedge(1, 0, 1/2);
+    }
+    // front left and right (tetrahedra with right-edge base)
+    for(x = [-1, 1]) translate([x*(w1+w2)/4, l2/2]) {
+        scale([(w1-w2)/2, l1, h]) rotate([0, 0, 45-x*45]) tri_pyramid_right(-1/2, -1/2);
+    }
 }
 
 module wing(w1, w2, w3, l1, l2, l3, t1, hs) {
@@ -281,7 +251,7 @@ module wing(w1, w2, w3, l1, l2, l3, t1, hs) {
     }
     // outer (rectangular wedge)
     translate([hs*l2r, (l1+l2)/2, l2r*t1/2]) {
-        scale([w2, l3, l3r*t1]) wedge(w3/w2, l3/(l2+l3), 1/2);
+        scale([w2, l3, l3r*t1]) rect_wedge(w3/w2, l3/(l2+l3), 1/2);
     }
 }
 
@@ -306,7 +276,7 @@ module horizontal_stabiliser(w1, w2, w3, l1, l2, t1, hs=0) {
     }
     // outer (rectangular wedge)
     translate([hs*l1r, l1/2, l1r*t1/2]) {
-        scale([w2, l2, l2r*t1]) wedge(w3/w2, l2r*hs/w2, 1/2);
+        scale([w2, l2, l2r*t1]) rect_wedge(w3/w2, l2r*hs/w2, 1/2);
     }
 }
 
@@ -325,7 +295,7 @@ module vertical_stabiliser(w, le, h1, h2) {
     }
     // top rear
     translate([0, -le/3, h2/2]) scale([w, le/3, h1-h2]) {
-        rotate([90, 0, 90]) wedge();
+        rotate([90, 0, 90]) rect_wedge();
     }
     // bottom front (triangular prism)
     translate([0, 0, (-h1+h2)/2]) scale([w, le/3, h2]) {
@@ -333,7 +303,7 @@ module vertical_stabiliser(w, le, h1, h2) {
     }
     // top front
     translate([0, 0, h2/2]) scale([w, le/3, h1-h2]) {
-        rotate([90, 0, 180]) tetrahedron(0, -1/2);
+        rotate([90, 0, 180]) tri_pyramid(0, -1/2);
     }
 }
 
@@ -346,14 +316,14 @@ module rudder(w, le, h1, h2) {
         h1, h2 = height (larger, smaller)
     */
     // middle
-    scale([w, le, h2]) rotate([0, 90, 0]) wedge();
+    scale([w, le, h2]) rotate([0, 90, 0]) rect_wedge();
     // bottom
     translate([0, 0, (-h1-h2)/4]) scale([w, le, (h1-h2)/2]) {
-        square_pyramid(0, 1/2);
+        rect_pyramid(0, 1/2);
     }
     // top
     translate([0, 0, (h1+h2)/4]) scale([w, le, (h1-h2)/2]) {
-        tetrahedron(0, -1/2);
+        tri_pyramid(0, -1/2);
     }
 }
 
@@ -364,7 +334,7 @@ module propeller(hl, hr, bl, bw, bt) {
         bl, bw, bt = blade length, width, thickness
     */
     // hub
-    scale([hr*2, hl, hr*2]) square_cupola();
+    scale([hr*2, hl, hr*2]) rect_cupola();
     // blades
     for(x = [0, 1]) rotate([0, x*180, 0]) translate([bl/2, 0, 0]) {
         rotate([0, -45, -90]) scale([bw, bl, bt]) hex_wedge(1/2);

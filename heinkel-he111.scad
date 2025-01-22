@@ -70,63 +70,81 @@ FUC = [.8, .5, .5];  // fuselage
 PLC = [.8, .8, .5];  // wings and stabilisers
 OTC = [.5, .8, .8];  // other parts
 
-// fuselage
-color(FUC) {
-    // front
-    translate([0, FUL2+(FUL1+FUL3)/2, 0]) {
-        scale([FUA*FUH2, FUL1, FUH2]) oct_frustum(FUH1/FUH2);
+module he111() {
+    /* Heinkel He 111 */
+    color(FUC) fuselage(FUL1, FUL2, FUL3, FUL4, FUL5, FUH1, FUH2, FUH3, FUH4, FUH5, FUA);
+    // wings
+    color(PLC) for(x = [-1, 1]) {
+        translate([x*(WIL1+WIL2+WIL3+FBW3)/2, 0, (WIW1/WIA-FUH3)/2]) {
+            rotate(-x*90) wing(x);
+        }
     }
-    // mid-front
-    translate([0, (FUL2+FUL3)/2, 0]) {
-        scale([FUA*FUH3, FUL2, FUH3]) oct_frustum(FUH2/FUH3);
+    // stabilisers
+    color(PLC) translate([0, -(FUL3+FUL5)/2-FUL4, 0]) {
+        // horizontal
+        for(x = [-1, 1]) translate([x*(HSTL1+HSTL2)/2, 0, 0]) rotate(-x*90) {
+            stabiliser(HSTL1, HSTL2, STW1, HSTW2, HSTW3, x*HSTSL);
+        }
+        // vertical
+        translate([0, 0, (VSTL1+VSTL2)/2]) rotate([90, 0, -90]) {
+            stabiliser(VSTL1, VSTL2, STW1, VSTW2, VSTW3, VSTSL);
+        }
     }
-    // mid
-    scale([FUA*FUH3, FUL3, FUH3]) oct_frustum(1);
-    // mid-rear
-    translate([0, -(FUL3+FUL4)/2, 0]) {
-        rotate(180) scale([FUA*FUH3, FUL4, FUH3]) oct_frustum(FUH4/FUH3);
-    }
-    // rear
-    translate([0, -FUL4-(FUL3+FUL5)/2, 0]) {
-        rotate(180) scale([FUA*FUH4, FUL5, FUH4]) oct_frustum(FUH5/FUH4);
+    // engines
+    color(OTC) for(x = [-1, 1]) {
+        translate([x*(FBW3/2+WIL1), FUL3/2, (WIW1/WIA-FUH3)/2]) engine();
     }
 }
 
-// wings
-color(PLC) translate([0, 0, (WIW1/WIA-FUH3)/2]) for(x = [-1, 1]) {
+he111();
+
+module fuselage(l1, l2, l3, l4, l5, h1, h2, h3, h4, h5, whr) {
+    /*
+    args:
+        l1...l5: length (front to rear)
+        h1...h5: height (front to rear)
+        whr:     width/height ratio
+    */
+    // front
+    translate([0, l2+(l1+l3)/2, 0]) {
+        scale([whr*h2, l1, h2]) oct_frustum(h1/h2);
+    }
+    // mid-front
+    translate([0, (l2+l3)/2, 0]) {
+        scale([whr*h3, l2, h3]) oct_frustum(h2/h3);
+    }
+    // mid
+    scale([whr*h3, l3, h3]) oct_frustum(1);
+    // mid-rear
+    translate([0, -(l3+l4)/2, 0]) {
+        rotate(180) scale([whr*h3, l4, h3]) oct_frustum(h4/h3);
+    }
+    // rear
+    translate([0, -l4-(l3+l5)/2, 0]) {
+        rotate(180) scale([whr*h4, l5, h4]) oct_frustum(h5/h4);
+    }
+}
+
+module wing(ss) {
+    /* centered;
+    root towards viewer;
+    ss = slant sign */
     // inner (straight)
-    translate([x*(FBW3+WIL1)/2, 0, 0]) {
-        rotate(-x*90) scale([WIW1, WIL1, WIW1/WIA]) hex_frustum(1);
+    translate([0, (-WIL2-WIL3)/2, 0]) {
+        scale([WIW1, WIL1, WIW1/WIA]) hex_frustum(1);
     }
     // middle (horizontal & vertical slant)
-    translate([x*((FBW3+WIL2)/2+WIL1), 0, 0]) {
-        rotate(-x*90) scale([WIW1, WIL2, WIW1/WIA]) {
-            hex_frustum(WIW2/WIW1, x*WIXO*WIW2/WIW1, WIYO*WIL2*WIA/WIW1);
+    translate([0, (WIL1-WIL3)/2, 0]) {
+        scale([WIW1, WIL2, WIW1/WIA]) {
+            hex_frustum(WIW2/WIW1, ss*WIXO*WIW2/WIW1, WIYO*WIL2*WIA/WIW1);
         }
     }
     // outer (vertical slant)
-    translate([x*((FBW3+WIL3)/2+WIL1+WIL2), -WIXO*WIW2, WIYO*WIL2]) {
-        rotate(-x*90) scale([WIW2, WIL3, WIW2/WIA]) {
+    translate([ss*WIXO*WIW2, (WIL1+WIL2)/2, WIYO*WIL2]) {
+        scale([WIW2, WIL3, WIW2/WIA]) {
             hex_frustum(WIW3/WIW2, 0, WIYO*WIL3*WIA/WIW2);
         }
     }
-}
-
-// stabilisers
-color(PLC) translate([0, -(FUL3+FUL5)/2-FUL4, 0]) {
-    // horizontal
-    for(x = [-1, 1]) translate([x*(HSTL1+HSTL2)/2, 0, 0]) rotate(-x*90) {
-        stabiliser(HSTL1, HSTL2, STW1, HSTW2, HSTW3, x*HSTSL);
-    }
-    // vertical
-    translate([0, 0, (VSTL1+VSTL2)/2]) rotate([90, 0, -90]) {
-        stabiliser(VSTL1, VSTL2, STW1, VSTW2, VSTW3, VSTSL);
-    }
-}
-
-// engines
-color(OTC) for(x = [-1, 1]) {
-    translate([x*(FBW3/2+WIL1), FUL3/2, (WIW1/WIA-FUH3)/2]) engine();
 }
 
 module stabiliser(il, ol, iw, mw, ow, sl) {
