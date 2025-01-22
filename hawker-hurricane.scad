@@ -251,7 +251,7 @@ module wing(w1, w2, w3, l1, l2, l3, t1, hs) {
     }
     // outer (rectangular wedge)
     translate([hs*l2r, (l1+l2)/2, l2r*t1/2]) {
-        scale([w2, l3, l3r*t1]) rect_wedge(w3/w2, l3/(l2+l3), 1/2);
+        scale([w2, l3, l3r*t1]) rect_wedge(w3/w2, hs*l3r/w2, 1/2);
     }
 }
 
