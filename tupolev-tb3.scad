@@ -97,11 +97,16 @@ module tb3() {
             }
         }
     }
-    // engines (x = left/right, o = inner/outer)
+    // engines and propellers (x = left/right, o = inner/outer)
     color(OTC) for(x = [-1, 1], o = [0, 1]) {
-        translate(
-            [x*(FUW4/2+WIL1+o*ENOX), WIW1/2+o*ENOY, (WIW1/WIA-FUH4)/2+o*ENOZ]
-        ) engine();
+        translate([x*(FUW4/2+WIL1+o*ENOX), 0, 0]) {
+            translate(
+                [0, WIW1/2+o*ENOY, (WIW1/WIA-FUH4)/2+o*ENOZ]
+            ) engine();
+            translate(
+                [0, (WIW1+ENL+PHL)/2+o*ENOY, (WIW1/WIA-FUH4)/2+o*ENOZ+PHR]
+            ) propeller();
+        }
     }
     // landing gear
     color(OTC) for(x = [-1, 1]) translate([x*(FUW4/2+WIL1-THIN/2), 0, -FUH4/2]) {
@@ -113,12 +118,12 @@ module tb3() {
     }
     // front gun
     color(OTC) translate([0, FUL2+FUL3+(FUL1+FUL4)/2+GUL/2, (FUH2+THIN)/2+(FUH2-FUH4)/2]) {
-        scale([THIN, GUL, THIN]) hex_frustum(1);
+        scale([THIN, GUL, THIN]) hex_prism();
     }
     // mid-rear guns
     color(OTC) for(x = [-1, 1]) {
         translate([x*(FUW4/3+GUL/2), x*FUL5*3/10-(FUL4+FUL5)/2, (FUH4+THIN)/2]) {
-            rotate(90) scale([THIN, GUL, THIN]) hex_frustum(1);
+            rotate(90) scale([THIN, GUL, THIN]) hex_prism();
         }
     }
 }
@@ -138,7 +143,7 @@ module fuselage() {
                 // rear
                 translate([0, -1/2, 0]) rotate([0, 135-x*45, 0]) rect_to_right_tri();
                 // front
-                translate([0, 1/2, 0]) rotate([0, 135-x*45, 0]) tri_pyramid_right(-1/2, -1/2);
+                translate([0, 1/2, 0]) rotate([0, 135-x*45, 0]) right_tri_pyramid(-1/2, -1/2);
             }
         }
     }
@@ -197,9 +202,10 @@ module fuselage() {
 }
 
 module wing(x) {
+    // TODO: root should be towards viewer
     // inner
     translate([x*(FUW4+WIL1)/2, 0, 0]) {
-        scale([WIL1, WIW1, WIW1/WIA]) rotate(90) hex_frustum(1);
+        scale([WIL1, WIW1, WIW1/WIA]) rotate(90) hex_prism();
     }
     // outer
     translate([x*((FUW4+WIL2)/2+WIL1), 0, 0]) {
@@ -216,15 +222,17 @@ module engine() {
     translate([0, ENL/4, 0]) {
         scale([ENW, ENL/2, ENH]) rect_frustum(1, 1/2, 0, 1/4);
     }
-    // propeller
-    translate([0, (ENL+PHL)/2, PHR]) for(x = [0, 1]) {
-        rotate([0, 30+x*180, 0]) {
-            // hub
-            scale([PHR*2, PHL, PHR*2]) rect_cupola();
-            // blades
-            translate([PBL/2, 0, 0]) rotate([0, 45, -90]) {
-                scale([PBW, PBL, PBT]) hex_wedge();
-            }
+}
+
+module propeller() {
+    // height of hexagonal frustum to make it regular
+    hh = PHR*sqrt(3);
+    // hub
+    scale([PHR*2, PHL, hh]) hex_frustum(1/2);
+    // blades
+    for(x = [0, 1]) rotate([0, 30+x*180, 0]) {
+        translate([PBL/2, 0, 0]) rotate([0, 45, -90]) {
+            scale([PBW, PBL, PBT]) hex_wedge(1/2);
         }
     }
 }
@@ -244,9 +252,9 @@ module landing_gear(le, h, w, t, wr) {
     // horizontal beam
     translate([0, 0, -h-t/2]) cube([le, t, t], center=true);
     // diagonal beam
-    translate([0, (-w-THIN)/2, -h-t/2]) scale([t, w, t]) rotate(180) rect_frustum(1, 1, 0, (h+t)/t);
+    translate([0, (-w-THIN)/2, -h-t/2]) scale([t, w, t]) rotate(180) rect_prism(0, (h+t)/t);
     // wheels
     translate([0, t, -h-t/2]) for(x = [-1, 1]) translate([x*le/2, 0, 0]) {
-        scale([wr*2, t, wr*2]) oct_frustum(1);
+        scale([wr*2, t, wr*2]) oct_prism();
     }
 }

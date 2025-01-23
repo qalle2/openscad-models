@@ -73,7 +73,7 @@ RUH2 = FUH4-VSTH1+2*VSTH2;  // height 2 (rear)
 PHR = FUW1/2;  // hub radius
 PHL =  50;     // hub length
 PBL = 240;     // blade length
-PBW =  35;     // blade width
+PBW =  30;     // blade width
 PBT =  20;     // blade thickness
 
 // colors
@@ -125,7 +125,7 @@ module hurricane() {
     }
     // propeller
     color(OTC) translate([0, (FUL1+FUL2+FUL3+FUL4+PHL)/2, 0]) {
-        rotate([0, 30, 0]) propeller(PHL, PHR, PBL, PBW, PBT);
+        propeller(PHL, PHR, PBL, PBW, PBT);
     }
 }
 
@@ -152,7 +152,7 @@ module fuselage(whr, w4, l1, l2, l3, l4, h1, h2, h3, h4, vs3) {
     }
     // mid-front (octagonal prism)
     translate([0, (-l1+l3+l4)/2, 0]) {
-        scale([h2*whr, l2, h2]) oct_frustum(1);
+        scale([h2*whr, l2, h2]) oct_prism();
     }
     // front (square frustum)
     translate([0, (l2+l3+l4)/2, 0]) {
@@ -222,7 +222,7 @@ module cockpit_fronthalf(w1, w2, l1, l2, h) {
     }
     // front left and right (tetrahedra with right-edge base)
     for(x = [-1, 1]) translate([x*(w1+w2)/4, l2/2]) {
-        scale([(w1-w2)/2, l1, h]) rotate([0, 0, 45-x*45]) tri_pyramid_right(-1/2, -1/2);
+        scale([(w1-w2)/2, l1, h]) rotate([0, 0, 45-x*45]) right_tri_pyramid(-1/2, -1/2);
     }
 }
 
@@ -243,7 +243,7 @@ module wing(w1, w2, w3, l1, l2, l3, t1, hs) {
     l3r = l3/(l2+l3);
     // rear (right hexagonal prism)
     translate([0, (-l2-l3)/2, 0]) {
-        scale([w1, l1, t1]) hex_frustum(1);
+        scale([w1, l1, t1]) hex_prism();
     }
     // middle (hexagon to rectangle)
     translate([0, (l1-l3)/2, 0]) {
@@ -297,9 +297,9 @@ module vertical_stabiliser(w, le, h1, h2) {
     translate([0, -le/3, h2/2]) scale([w, le/3, h1-h2]) {
         rotate([90, 0, 90]) rect_wedge();
     }
-    // bottom front (triangular prism)
+    // bottom front
     translate([0, 0, (-h1+h2)/2]) scale([w, le/3, h2]) {
-        rotate([-90, 0, 0]) tri_frustum(1, 0, 1);
+        rotate([-90, 0, 0]) tri_prism(0, 1);
     }
     // top front
     translate([0, 0, h2/2]) scale([w, le/3, h1-h2]) {
@@ -333,10 +333,12 @@ module propeller(hl, hr, bl, bw, bt) {
         hl, hr     = hub   length, radius
         bl, bw, bt = blade length, width, thickness
     */
+    // height of hexagonal frustum to make it regular
+    hh = hr*sqrt(3);
     // hub
-    scale([hr*2, hl, hr*2]) rect_cupola();
+    scale([hr*2, hl, hh]) hex_frustum(1/2);
     // blades
-    for(x = [0, 1]) rotate([0, x*180, 0]) translate([bl/2, 0, 0]) {
+    for(x = [0, 1]) rotate([0, 30+x*180, 0]) translate([bl/2, 0, 0]) {
         rotate([0, -45, -90]) scale([bw, bl, bt]) hex_wedge(1/2);
     }
 }

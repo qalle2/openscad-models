@@ -23,7 +23,6 @@ FBW3 = FUA*FUH3/(1+sqrt(2));  // flat bottom width
 FUL4 = 660;
 FUH4 = 120;
 FUL5 = 300;
-FUH5 =   0;
 
 /*
 wings
@@ -74,7 +73,7 @@ OTC = [.5, .8, .8];  // other parts
 
 module he111() {
     /* Heinkel He 111 */
-    color(FUC) fuselage(FUL1, FUL2, FUL3, FUL4, FUL5, FUH1, FUH2, FUH3, FUH4, FUH5, FUA);
+    color(FUC) fuselage(FUL1, FUL2, FUL3, FUL4, FUL5, FUH1, FUH2, FUH3, FUH4, FUA);
     // wings
     color(PLC) for(x = [-1, 1]) {
         translate([x*(WIL1+WIL2+WIL3+FBW3)/2, (-FUL1-FUL2+FUL4+FUL5)/2, (WIT1-FUH3)/2]) {
@@ -103,11 +102,11 @@ module he111() {
 
 he111();
 
-module fuselage(l1, l2, l3, l4, l5, h1, h2, h3, h4, h5, whr) {
+module fuselage(l1, l2, l3, l4, l5, h1, h2, h3, h4, whr) {
     /*
     args:
         l1...l5: length (front to rear)
-        h1...h5: height (front to rear)
+        h1...h4: height (front to rear)
         whr:     width/height ratio
     */
     // front
@@ -120,7 +119,7 @@ module fuselage(l1, l2, l3, l4, l5, h1, h2, h3, h4, h5, whr) {
     }
     // mid
     translate([0, (-l1-l2+l4+l5)/2, 0]) {
-        scale([whr*h3, l3, h3]) oct_frustum(1);
+        scale([whr*h3, l3, h3]) oct_prism();
     }
     // mid-rear
     translate([0, (-l1-l2-l3+l5)/2, 0]) {
@@ -128,7 +127,7 @@ module fuselage(l1, l2, l3, l4, l5, h1, h2, h3, h4, h5, whr) {
     }
     // rear
     translate([0, (-l1-l2-l3-l4)/2, 0]) {
-        rotate(180) scale([whr*h4, l5, h4]) oct_frustum(h5/h4);
+        rotate(180) scale([whr*h4, l5, h4]) oct_pyramid();
     }
 }
 
@@ -146,7 +145,7 @@ module wing(l1, l2, l3, w1, w2, w3, t1, hs, vs) {
     // inner (straight)
     translate([0, (-l2-l3)/2, 0])
         scale([w1, l1, t1])
-            hex_frustum(1);
+            hex_prism();
     // middle
     translate([0, (l1-l3)/2, 0])
         scale([w1, l2, t1])
@@ -189,7 +188,7 @@ module engine(le, r1, r2) {
     h2 = r2*sqrt(3);
     // front half
     translate([0, le/4, 0]) {
-        scale([r1*2, le/2, h1]) hex_frustum(1);
+        scale([r1*2, le/2, h1]) hex_prism();
     }
     // rear half
     translate([0, -le/4, 0]) rotate(180) {
