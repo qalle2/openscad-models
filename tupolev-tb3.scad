@@ -32,44 +32,58 @@ FUH7 = 120;  // height - rear
 
 /*
 For wings and stabilisers:
-    "length" = from fuselage to tip
-    "width"  = from leading to trailing edge
-Sections of wing: inner, outer. Separated by centerline of inner engine.
+    L = length = from fuselage to tip
+    W = width  = from leading to trailing edge
+    T = thickness
 */
-WIA  =    5;  // width/thickness (must be uniform)
-WIL1 =  150;  // length - inner
-WIW1 = FUL4;  // width - inner
-WIL2 = 1060;  // length - outer
-WIW2 =  150;  // width - outer
-WTSL = 7/10;  // tip vertical slant (of max height)
 
-// stabilisers
-HSTL  = 400;  // horizontal - length
-VSTL  = 230;  // vertical   - length
-HSTW2 = 120;  // horizontal - width outer
-VSTW2 =  90;  // vertical   - width outer
+// wings (inner to outer sections)
+WIL1 =  150; WIW1 = FUL4; WIT1 = 100;
+WIL2 = 1030; WIW2 =  150;
+WIL3 =   30; WIW3 =   90;
 
-// engines
-ENW  =  60;  // width
-ENL  = 180;  // length
-ENH  = 130;  // height
-ENOX = 280;  // outer engine X/Y/Z relative to inner
-ENOY = -30;
-ENOZ =  20;
-PHR  =  20;  // propeller hub radius/length
-PHL  =  30;
-PBL  = 115;  // propeller blade length/width/thickness
-PBW  =  20;
-PBT  =  10;
+// horizontal & vertical stabilisers
+STW1 = FUL7;
+STT1 =   20;
+
+// horizontal stabilisers
+HSTL  = 400;
+HSTW2 = 120;
+HSTHS =  20;  // horizontal slant
+
+// vertical stabiliser
+VSTL  = 230;
+VSTW2 =  90;
+VSTVS =  40;  // vertical slant
+
+// engine size
+ENW =  60;  // width
+ENL = 180;  // length
+ENH = 130;  // height
+
+// outer engine location relative to inner
+ENOX = 280;
+ENOY = (ENOX/WIL2)*(WIW2-WIW1)/2;
+ENOZ = (ENOX/(WIL2+WIL3))*WIT1/2;
+
+// propeller
+PHR  =  20;  // hub   radius
+PHL  =  30;  // hub   length
+PBL  = 115;  // blade length
+PBW  =  20;  // blade width
+PBT  =  10;  // blade thickness
 
 // landing gear
-GEH = 110;  // height (vertical beam)
-GEL = 130;  // length (horizontal beam)
+GEL = 220;  // total length
+GEH = 165;  // total height
+GET =  20;  // thickness (beams & wheels)
 WHR =  45;  // wheel radius
 
-GUL = 100;  // gun length
+// guns
+GUL = 100;  // length
+GUT =  15;  // thickness
 
-THIN = 20;  // minimum thickness of anything
+WSS = 20;   // windshield length & height
 
 // colors
 FUC = [.8, .5, .5];  // fuselage
@@ -77,88 +91,107 @@ PLC = [.8, .8, .5];  // wings and stabilisers
 OTC = [.5, .8, .8];  // other parts
 
 module tb3() {
-    color(FUC) fuselage();
+    color(FUC) fuselage(
+        FUL1, FUL2, FUL3, FUL4, FUL5, FUL6, FUL7,
+        FUW2, FUW4, FUW7,
+        FUH2, FUH4, FUH7
+    );
     // wings
-    color(PLC) translate([0, 0, (WIW1/WIA-FUH4)/2]) for(x = [-1, 1]) wing(x);
-    // stabilisers
-    color(PLC) translate([0, -FUL5-FUL6-(FUL4+FUL7)/2, (FUH4-FUH7)/2]) {
+    color(PLC) for(x = [-1, 1]) translate([
+        x*(FUW4+WIL1+WIL2+WIL3)/2,
+        (-FUL1-FUL2-FUL3+FUL5+FUL6+FUL7)/2,
+        (WIT1-FUH4)/2
+    ]) {
+        rotate(-x*90) wing(WIL1, WIL2, WIL3, WIW1, WIW2, WIW3, WIT1);
+    }
+    // stabilisers (TODO: rudder and elevators)
+    color(PLC) translate(
+        [0, (-FUL1-FUL2-FUL3-FUL4-FUL5-FUL6)/2, (FUH4-FUH7)/2]
+    ) {
         // horizontal
-        for(x = [-1, 1])  {
-            translate([x*(FUW7+HSTL)/2, 0, (FUH7-THIN)/2]) {
-                rotate([0, -90+x*90, -x*90]) scale([FUL7, HSTL, THIN]) {
-                    hex_frustum(HSTW2/FUL7, 1/2-(HSTW2/2+20)/FUL7, 0);
-                }
+        for(x = [-1, 1]) translate([x*(FUW7+HSTL)/2, 0, (FUH7-STT1)/2]) {
+            scale([HSTL, STW1, STT1]) rotate([0, 0, -x*90]) {
+                hex_wedge(HSTW2/FUL7, x*HSTHS/FUL7, 0);
             }
         }
         // vertical
-        translate([0, 0, (FUH7+VSTL)/2]) rotate([90, 0, -90]) {
-            scale([FUL7, VSTL, THIN]) {
-                hex_frustum(VSTW2/FUL7, 1/2-(VSTW2/2+20)/FUL7, 0);
+        translate([0, 0, (FUH7+VSTL)/2]) {
+            scale([STT1, STW1, VSTL]) rotate([90, 0, -90]) {
+                hex_wedge(VSTW2/FUL7, VSTVS/FUL7, 0);
             }
         }
     }
     // engines and propellers (x = left/right, o = inner/outer)
     color(OTC) for(x = [-1, 1], o = [0, 1]) {
-        translate([x*(FUW4/2+WIL1+o*ENOX), 0, 0]) {
-            translate(
-                [0, WIW1/2+o*ENOY, (WIW1/WIA-FUH4)/2+o*ENOZ]
-            ) engine();
-            translate(
-                [0, (WIW1+ENL+PHL)/2+o*ENOY, (WIW1/WIA-FUH4)/2+o*ENOZ+PHR]
-            ) propeller();
+        translate([
+            x*(FUW4/2+WIL1+o*ENOX),
+            WIW1/2        +o*ENOY + (-FUL1-FUL2-FUL3+FUL5+FUL6+FUL7)/2,
+            (WIT1-FUH4)/2 +o*ENOZ
+        ]) {
+            engine();
+            translate([0, (ENL+PHL)/2, PHR]) propeller();
         }
     }
     // landing gear
-    color(OTC) for(x = [-1, 1]) translate([x*(FUW4/2+WIL1-THIN/2), 0, -FUH4/2]) {
-        rotate(-x*90) landing_gear(GEL, GEH, FUW4-THIN/2, THIN, WHR);
+    color(OTC) for(x = [-1, 1]) {
+        translate([x*((FUW4+WIL1+GET)/2), (-FUL1-FUL2-FUL3+FUL5+FUL6+FUL7)/2, (-FUH4-GEH)/2]) {
+            rotate(-x*90) landing_gear(GEL, GEH, WIL1+GET, GET, WHR);
+        }
     }
     // windshield
-    color(OTC) translate([0, (FUL4+FUL3)/2+THIN/2, (FUH4+THIN)/2]) {
-        scale([FUW4*2/3, THIN, THIN]) rect_wedge(1, 0, -1/2);
+    color(OTC) translate([0, (-FUL1-FUL2+FUL4+FUL5+FUL6+FUL7+WSS)/2, (FUH4+WSS)/2]) {
+        scale([FUW4*2/3, WSS, WSS]) rect_wedge(1, 0, -1/2);
     }
     // front gun
-    color(OTC) translate([0, FUL2+FUL3+(FUL1+FUL4)/2+GUL/2, (FUH2+THIN)/2+(FUH2-FUH4)/2]) {
-        scale([THIN, GUL, THIN]) hex_prism();
+    color(OTC) translate([0, (FUL2+FUL3+FUL4+FUL5+FUL6+FUL7+GUL)/2, FUH2+(GUT-FUH4)/2]) {
+        gun();
     }
     // mid-rear guns
-    color(OTC) for(x = [-1, 1]) {
-        translate([x*(FUW4/3+GUL/2), x*FUL5*3/10-(FUL4+FUL5)/2, (FUH4+THIN)/2]) {
-            rotate(90) scale([THIN, GUL, THIN]) hex_prism();
+    color(OTC) translate([0, (-FUL1-FUL2-FUL3-FUL4+FUL6+FUL7)/2, (FUH4+GUT)/2]) {
+        for(x = [-1, 1]) translate([x*(FUW4/3+GUL/2), x*3/10*FUL5, 0]) {
+            rotate(90) gun();
         }
     }
 }
 
 tb3();
 
-module fuselage() {
+module fuselage(l1, l2, l3, l4, l5, l6, l7, w2, w4, w7, h2, h4, h7) {
+    /*
+    args:
+        l1...l7:    length (front to rear)
+        w2, w4, w7: width  (front to rear)
+        h2, h4, h7: height (front to rear)
+    */
     // front
-    translate([0, FUL2+FUL3+(FUL1+FUL4)/2, (FUH2-FUH4)/2]) {
-        scale([FUW2/3, FUL1/2, FUH2]) {
-            // center rear
-            translate([0, -1/2, -1/8]) cube([1, 1, 3/4], center=true);
-            // center front
+    translate([0, (l2+l3+l4+l5+l6+l7)/2, (h2-h4)/2]) {
+        scale([w2/3, l1/2, h2]) {
+            // rear/front center
+            translate([0, -1/2, -1/4]) cube([1, 1, 1/2], center=true);
             translate([0, 1/2, 0]) rotate([0, 180, 0]) rect_wedge(1, 0, -.5);
             // left/right
             for(x = [-1, 1]) translate([x, 0, 0]) {
-                // rear
-                translate([0, -1/2, 0]) rotate([0, 135-x*45, 0]) rect_to_right_tri();
-                // front
-                translate([0, 1/2, 0]) rotate([0, 135-x*45, 0]) right_tri_pyramid(-1/2, -1/2);
+                translate([0, -1/2, 0]) {  // rear
+                    rotate([0, 135-x*45, 0]) rect_to_right_tri();
+                }
+                translate([0, 1/2, 0]) {  // front
+                    rotate([0, 135-x*45, 0]) right_tri_pyramid(-1/2, -1/2);
+                }
             }
         }
     }
     // front-mid
-    translate([0, FUL3+(FUL2+FUL4)/2, 0]) scale([FUW4, FUL2, FUH4]) {
-        rect_frustum(FUW2/FUW4, FUH2/FUH4, 0, (FUH2/FUH4-1)/2);
+    translate([0, (-l1+l3+l4+l5+l6+l7)/2, 0]) scale([w4, l2, h4]) {
+        rect_frustum(w2/w4, h2/h4, 0, (h2/h4-1)/2);
     }
     // mid-front
-    translate([0, (FUL4+FUL3)/2, 0]) {
+    translate([0, (-l1-l2+l4+l5+l6+l7)/2, 0]) {
         // rear half is seat; seat width is 2/3 of total width
-        scale([FUW4, FUL3, FUH4]) {
+        scale([w4, l3, h4]) {
             // front
-            translate([0,  1/4,    0]) cube([  1, 1/2,   1], center=true);
+            translate([0, 1/4, 0]) cube([1, 1/2, 1], center=true);
             // rear center
-            translate([0, -1/4, -1/8]) cube([2/3, 1/2, 3/4], center=true);
+            translate([0, -1/4, -1/4]) cube([2/3, 1/2, 1/2], center=true);
             // rear left/right
             for(x = [-1, 1]) {
                 translate([x*5/12, -1/4, 0]) cube([1/6, 1/2, 1], center=true);
@@ -166,9 +199,11 @@ module fuselage() {
         }
     }
     // mid
-    cube([FUW4, FUL4, FUH4], center=true);
+    translate([0, (-l1-l2-l3+l5+l6+l7)/2, 0]) {
+        cube([w4, l4, h4], center=true);
+    }
     // mid-rear
-    translate([0, -(FUL4+FUL5)/2, 0]) {
+    translate([0, (-l1-l2-l3-l4+l6+l7)/2, 0]) {
         /*
         gunners' seats; 6 cuboids; all have the same Z_min;
         from above ("S" = seat, "." = full-height):
@@ -179,9 +214,9 @@ module fuselage() {
             . S S . . .
         */
         for(x = [-1, 1]) {
-            scale([FUW4, FUL5, FUH4]) {
+            scale([w4, l5, h4]) {
                 // seats (front right / rear left)
-                translate([x/6, x*3/10, -1/8]) cube([1/3, 2/5, 3/4], center=true);
+                translate([x/6, x*3/10, -1/4]) cube([1/3, 2/5, 1/2], center=true);
                 // large full-height cuboids (front left / rear right)
                 translate([x/4, -x/5, 0]) cube([1/2, 3/5, 1], center=true);
                 // small full-height cuboids (front right / rear left)
@@ -190,28 +225,36 @@ module fuselage() {
         }
     }
     // rear-mid
-    translate([0, -FUL5-(FUL4+FUL6)/2, 0]) {
-        rotate(180) scale([FUW4, FUL6, FUH4]) {
-            rect_frustum(FUW7/FUW4, FUH7/FUH4, 0, (1-FUH7/FUH4)/2);
+    translate([0, (-l1-l2-l3-l4-l5+l7)/2, 0]) {
+        rotate(180) scale([w4, l6, h4]) {
+            rect_frustum(w7/w4, h7/h4, 0, (1-h7/h4)/2);
         }
     }
     // rear
-    translate([0, -FUL5-FUL6-(FUL4+FUL7)/2, (FUH4-FUH7)/2]) {
-        cube([FUW7, FUL7, FUH7], center=true);
+    translate([0, (-l1-l2-l3-l4-l5-l6)/2, (h4-h7)/2]) {
+        cube([w7, l7, h7], center=true);
     }
 }
 
-module wing(x) {
-    // TODO: root should be towards viewer
-    // inner
-    translate([x*(FUW4+WIL1)/2, 0, 0]) {
-        scale([WIL1, WIW1, WIW1/WIA]) rotate(90) hex_prism();
+module wing(l1, l2, l3, w1, w2, w3, t1) {
+    /*
+    top is horizontal;
+    mid and outer sections have the same bottom vertical slant;
+    args:
+        l1...l3 = length    (inner to outer)
+        w1...w3 = width     (inner to outer)
+        t1      = thickness (inner)
+    */
+    l2r = l2/(l2+l3);
+    l3r = l3/(l2+l3);
+    translate([0, (-l2-l3)/2, 0]) {  // inner
+        scale([w1, l1, t1]) hex_prism();
     }
-    // outer
-    translate([x*((FUW4+WIL2)/2+WIL1), 0, 0]) {
-        rotate(-x*90) scale([WIW1, WIL2, WIW1/WIA]) {
-            hex_frustum(WIW2/WIW1, 0, WTSL);
-        }
+    translate([0, (l1-l3)/2, 0]) {  // middle
+        scale([w1, l2, t1]) hex_to_rect(w2/w1, l3r, 0, l2r/2);
+    }
+    translate([0, (l1+l2)/2, l2r*t1/2]) {  // outer
+        scale([w2, l3, l3r*t1]) rect_wedge(w3/w2, 0, 1/2);
     }
 }
 
@@ -237,24 +280,31 @@ module propeller() {
     }
 }
 
-module landing_gear(le, h, w, t, wr) {
-    /* centered on vertical beam;
-    diagonal beam towards viewer;
+module landing_gear(w, h, le, t, wr) {
+    /* diagonal beam towards viewer;
     args:
-        le = length
-        h  = height
         w  = width
-        t  = thickness
+        h  = height (excl. non-full-length top of diagonal beam)
+        le = length
+        t  = beam thickness
         wr = wheel radius
     */
+    hvby = (le-t*3)/2;  // vert. & horiz. beam Y
+    hbw  = w-2*wr;      // horiz.         beam width
+    hbz  = -h/2+wr;     // horiz.         beam Z
+    vbh  = h-wr-t/2;    // vert.          beam height
     // vertical beam
-    translate([0, 0, -h/2]) cube([t, t, h], center=true);
+    translate([0, hvby, (h-vbh)/2]) cube([t, t, vbh], center=true);
     // horizontal beam
-    translate([0, 0, -h-t/2]) cube([le, t, t], center=true);
+    translate([0, hvby, hbz]) cube([hbw, t, t], center=true);
     // diagonal beam
-    translate([0, (-w-THIN)/2, -h-t/2]) scale([t, w, t]) rotate(180) rect_prism(0, (h+t)/t);
+    translate([0, -t, (h+t)/2]) scale([t, le-2*t, t]) rect_prism(0, -(vbh+t)/t);
     // wheels
-    translate([0, t, -h-t/2]) for(x = [-1, 1]) translate([x*le/2, 0, 0]) {
+    translate([0, (le-t)/2, hbz]) for(x = [-1, 1]) translate([x*hbw/2, 0, 0]) {
         scale([wr*2, t, wr*2]) oct_prism();
     }
+}
+
+module gun() {
+    scale([GUT, GUL, GUT]) hex_prism();
 }
