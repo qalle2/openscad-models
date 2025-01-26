@@ -400,34 +400,105 @@ module oct_prism(fx=0, fz=0) {
     oct_frustum(1, fx, fz);
 }
 
+module aircraft_wing(l1, l2, l3, w1, w2, w3, t1, hs=0, vs=0) {
+    /*
+    an aircraft wing;
+    root towards viewer;
+    args:
+        l1...l3 = length       (inner to outer)
+        w1...w3 = width        (inner to outer)
+        t1      = thickness    (inner)
+        hs, vs  = slant of middle & outer sections (horizontal, vertical)
+    */
+    l2r = l2/(l2+l3);
+    l3r = l3/(l2+l3);
+    // inner
+    translate([0, (-l2-l3)/2, 0]) {
+        scale([w1, l1, t1]) hex_prism();
+    }
+    // middle
+    translate([0, (l1-l3)/2, 0]) {
+        scale([w1, l2, t1]) hex_to_rect(w2/w1, l3r, l2r*hs/w1, l2r*vs/t1);
+    }
+    // outer
+    translate([l2r*hs, (l1+l2)/2, l2r*vs]) {
+        scale([w2, l3, l3r*t1]) rect_wedge(w3/w2, l3r*hs/w2, vs/t1);
+    }
+}
+
+module aircraft_stabiliser(l1, l2, w1, w2, w3, t1, hs=0, vs=0) {
+    /*
+    an aircraft stabiliser;
+    like the mid and outer sections of the wing;
+    root towards viewer;
+    args:
+        l1, l2  = length    (inner, outer)
+        w1...w3 = width     (inner to outer)
+        t1      = thickness (inner)
+        hs, vs  = slant     (horizontal, vertical)
+    */
+    l1r = l1/(l1+l2);
+    l2r = l2/(l1+l2);
+    // inner
+    translate([0, -l2/2, 0]) {
+        scale([w1, l1, t1]) hex_to_rect(w2/w1, l2r, l1r*hs/w1, l1r*vs/t1);
+    }
+    // outer
+    translate([l1r*hs, l1/2, l1r*vs]) {
+        scale([w2, l2, l2r*t1]) rect_wedge(w3/w2, l2r*hs/w2, vs/t1);
+    }
+}
+
+module aircraft_propeller(hl, hr, bl, bw, bt, bc) {
+    /*
+    an aircraft propeller;
+    args:
+        hl, hr         = hub   length, radius
+        bl, bw, bt, bc = blade length, width, thickness, count
+    */
+    // hub (base is regular hexagon)
+    scale([hr*2, hl, hr*sqrt(3)]) hex_frustum(1/2);
+    // blades
+    for(i = [0:bc-1]) rotate([0, 30+i*(360/bc), 0]) {
+        translate([bl/2, 0, 0]) rotate([0, 45, -90]) {
+            scale([bw, bl, bt]) hex_wedge(1/2);
+        }
+    }
+}
+
 // demo (derived objects in orange)
 DER = [1, .5, 0];
 scale(100) {
-    translate([ 3, 0,  4]) color(DER) tri_pyramid();
-    translate([ 1, 0,  4])            tri_wedge(1/2);
-    translate([-3, 0,  4]) color(DER) tri_prism();
-    translate([-5, 0,  4])            tri_frustum(1/2);
+    translate([ 4, 0,  5]) color(DER) tri_pyramid();
+    translate([ 2, 0,  5])            tri_wedge(1/2);
+    translate([-2, 0,  5]) color(DER) tri_prism();
+    translate([-4, 0,  5])            tri_frustum(1/2);
 
-    translate([ 3, 0,  2]) color(DER) right_tri_pyramid();
-    translate([ 1, 0,  2])            right_tri_wedge(1/2);
-    translate([-3, 0,  2]) color(DER) right_tri_prism();
-    translate([-5, 0,  2])            right_tri_frustum(1/2);
+    translate([ 4, 0,  3]) color(DER) right_tri_pyramid();
+    translate([ 2, 0,  3])            right_tri_wedge(1/2);
+    translate([-2, 0,  3]) color(DER) right_tri_prism();
+    translate([-4, 0,  3])            right_tri_frustum(1/2);
 
-    translate([ 3, 0,  0]) color(DER) rect_pyramid();
-    translate([ 1, 0,  0]) color(DER) rect_wedge(1/2);
-    translate([-1, 0,  0])            rect_to_right_tri();
-    translate([-3, 0,  0]) color(DER) rect_prism();
-    translate([-5, 0,  0])            rect_frustum(1/2, 1/2);
+    translate([ 4, 0,  1]) color(DER) rect_pyramid();
+    translate([ 2, 0,  1]) color(DER) rect_wedge(1/2);
+    translate([ 0, 0,  1])            rect_to_right_tri();
+    translate([-2, 0,  1]) color(DER) rect_prism();
+    translate([-4, 0,  1])            rect_frustum(1/2, 1/2);
 
-    translate([ 3, 0, -2]) color(DER) hex_pyramid();
-    translate([ 1, 0, -2]) color(DER) hex_wedge(1/2);
-    translate([-1, 0, -2])            hex_to_rect();
-    translate([-3, 0, -2]) color(DER) hex_prism();
-    translate([-5, 0, -2])            hex_frustum(1/2);
+    translate([ 4, 0, -1]) color(DER) hex_pyramid();
+    translate([ 2, 0, -1]) color(DER) hex_wedge(1/2);
+    translate([ 0, 0, -1])            hex_to_rect();
+    translate([-2, 0, -1]) color(DER) hex_prism();
+    translate([-4, 0, -1])            hex_frustum(1/2);
 
-    translate([ 3, 0, -4]) color(DER) oct_pyramid();
-    translate([ 1, 0, -4]) color(DER) oct_wedge(1/2);
-    translate([-1, 0, -4])            rect_cupola(1/2, 1/2);
-    translate([-3, 0, -4]) color(DER) oct_prism();
-    translate([-5, 0, -4])            oct_frustum(1/2);
+    translate([ 4, 0, -3]) color(DER) oct_pyramid();
+    translate([ 2, 0, -3]) color(DER) oct_wedge(1/2);
+    translate([ 0, 0, -3])            rect_cupola(1/2, 1/2);
+    translate([-2, 0, -3]) color(DER) oct_prism();
+    translate([-4, 0, -3])            oct_frustum(1/2);
+
+    translate([ 5, 0, -5]) color(DER) aircraft_wing(1, 5, 1, 5, 3, 1, 1);
+    translate([ 0, 0, -5]) color(DER) aircraft_stabiliser(3, 1, 3, 2, 1, 1);
+    translate([-5, 0, -5]) color(DER) aircraft_propeller(1, 1, 2, 1/2, 1/4, 2);
+
 }

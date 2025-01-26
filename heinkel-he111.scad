@@ -63,8 +63,10 @@ ENL = 360;  // length
 
 // propellers
 PHL =  50;  // hub   length
+PHR =  35;  // hub   radius
 PBL = 180;  // blade length
 PBW =  30;  // blade width  (at root)
+PBT =  15;  // blade thickness
 
 // colors
 FUC = [.8, .5, .5];  // fuselage
@@ -73,29 +75,37 @@ OTC = [.5, .8, .8];  // other parts
 
 module he111() {
     /* Heinkel He 111 */
-    color(FUC) fuselage(FUL1, FUL2, FUL3, FUL4, FUL5, FUH1, FUH2, FUH3, FUH4, FUA);
+    color(FUC) {
+        fuselage(FUL1, FUL2, FUL3, FUL4, FUL5, FUH1, FUH2, FUH3, FUH4, FUA);
+    }
     // wings
-    color(PLC) for(x = [-1, 1]) {
-        translate([x*(WIL1+WIL2+WIL3+FBW3)/2, (-FUL1-FUL2+FUL4+FUL5)/2, (WIT1-FUH3)/2]) {
-            rotate(-x*90) wing(WIL1, WIL2, WIL3, WIW1, WIW2, WIW3, WIT1, x*WIHS, WIVS);
-        }
+    color(PLC) for(x = [-1, 1]) translate(
+        [x*(WIL1+WIL2+WIL3+FBW3)/2, (-FUL1-FUL2+FUL4+FUL5)/2, (WIT1-FUH3)/2]
+    ) rotate(-x*90) {
+        aircraft_wing(WIL1, WIL2, WIL3, WIW1, WIW2, WIW3, WIT1, x*WIHS, WIVS);
     }
     // stabilisers
     color(PLC) translate([0, (-FUL1-FUL2-FUL3-FUL4)/2, 0]) {
         // horizontal
-        for(x = [-1, 1]) translate([x*(HSTL1+HSTL2)/2, 0, 0]) rotate(-x*90) {
-            stabiliser(HSTL1, HSTL2, STW1, HSTW2, HSTW3, STT, x*HSTHS);
+        for(x = [-1, 1]) translate([x*(HSTL1+HSTL2)/2, 0, 0]) {
+            rotate(-x*90) aircraft_stabiliser(
+                HSTL1, HSTL2, STW1, HSTW2, HSTW3, STT, x*HSTHS
+            );
         }
         // vertical
-        translate([0, 0, (VSTL1+VSTL2)/2]) rotate([90, 0, -90]) {
-            stabiliser(VSTL1, VSTL2, STW1, VSTW2, VSTW3, STT, VSTHS);
+        translate([0, 0, (VSTL1+VSTL2)/2]) {
+            rotate([90, 0, -90]) aircraft_stabiliser(
+                VSTL1, VSTL2, STW1, VSTW2, VSTW3, STT, VSTHS
+            );
         }
     }
     // engines and propellers
-    color(OTC) for(x = [-1, 1]) {
-        translate([x*(FBW3/2+WIL1), (-FUL1-FUL2+FUL3+FUL4+FUL5)/2, (WIT1-FUH3)/2]) {
-            engine(ENL, ENR, WIT1/2);
-            translate([0, (ENL+PHL)/2, 0]) propeller(ENR, PHL, PBL, PBW);
+    color(OTC) for(x = [-1, 1]) translate(
+        [x*(FBW3/2+WIL1), (-FUL1-FUL2+FUL3+FUL4+FUL5)/2, (WIT1-FUH3)/2]
+    ) {
+        engine(ENL, ENR, WIT1/2);
+        translate([0, (ENL+PHL)/2, 0]) {
+            aircraft_propeller(PHL, PHR, PBL, PBW, PBT, 3);
         }
     }
 }
@@ -129,31 +139,6 @@ module fuselage(l1, l2, l3, l4, l5, h1, h2, h3, h4, whr) {
     translate([0, (-l1-l2-l3-l4)/2, 0]) {
         rotate(180) scale([whr*h4, l5, h4]) oct_pyramid();
     }
-}
-
-module wing(l1, l2, l3, w1, w2, w3, t1, hs, vs) {
-    /*
-    root towards viewer;
-    args:
-        l1...l3 = length    (inner to outer)
-        w1...w3 = width     (inner to outer)
-        t1      = thickness (inner)
-        hs, vs  = slant of middle and outer wing (horizontal, vertical)
-    */
-    l2r = l2/(l2+l3);
-    l3r = l3/(l2+l3);
-    // inner (straight)
-    translate([0, (-l2-l3)/2, 0])
-        scale([w1, l1, t1])
-            hex_prism();
-    // middle
-    translate([0, (l1-l3)/2, 0])
-        scale([w1, l2, t1])
-            hex_to_rect(w2/w1, l3r, l2r*hs/w1, l2r*vs/t1);
-    // outer
-    translate([l2r*hs, (l1+l2)/2, l2r*vs])
-        scale([w2, l3, l3r*t1])
-            rect_wedge(w3/w2, l3r*hs/w2, vs/t1);
 }
 
 module stabiliser(l1, l2, w1, w2, w3, t1, hs) {
@@ -193,21 +178,5 @@ module engine(le, r1, r2) {
     // rear half
     translate([0, -le/4, 0]) rotate(180) {
         scale([r1*2, le/2, h1]) hex_frustum(r2/(h1/2));
-    }
-}
-
-module propeller(hr, hl, bl, bw) {
-    /*
-    args:
-        hr, hl = hub   radius, length
-        bl, bw = blade length, width
-    */
-    // propeller hub (base is regular hexagon)
-    scale([hr, hl, hr*sqrt(3)/2]) hex_frustum(1/2);
-    // propeller blades
-    for(i = [0:2]) rotate([0, 30+i*120, 0]) {
-        translate([bl/2, 0, 0]) rotate([0, 45, -90]) {
-            scale([bw, bl, bw/2]) hex_wedge(1/2);
-        }
     }
 }

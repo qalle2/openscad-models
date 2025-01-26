@@ -87,32 +87,36 @@ module hurricane() {
     args: none but uses global constants;
     */
     // fuselage
-    color(FUC) fuselage(FUA, FUW4, FUL1, FUL2, FUL3, FUL4, FUH1, FUH2, FUH3, FUH4, FUVS3*FUH2);
+    color(FUC) fuselage(
+        FUA, FUW4, FUL1, FUL2, FUL3, FUL4, FUH1, FUH2, FUH3, FUH4, FUVS3*FUH2
+    );
     // rear half of cockpit
     color(FUC) {
         // width at rear
         rw = COW1*(1-COL4/FUL3*(1-FUW3/FUW2));
         // total height; also total height of rear half
         h = ((FUH2-FUH3)/2-FUVS3*FUH2)/FUL3 * COL4 + COH;
-        translate([0, (-FUL1-FUL2+FUL3+FUL4+COL3-COL4)/2, COH+(FUH2-h)/2]) {
-            cockpit_rearhalf(rw, COW1, COW2, COL4, COL3, h, COH);
-        }
+        translate(
+            [0, (-FUL1-FUL2+FUL3+FUL4+COL3-COL4)/2, COH+(FUH2-h)/2]
+        ) cockpit_rearhalf(rw, COW1, COW2, COL4, COL3, h, COH);
     }
     // front half of cockpit
-    color(OTC) translate([0, COL3+(-FUL1-FUL2+FUL3+FUL4+COL1+COL2)/2, (FUH2+COH)/2]) {
-        cockpit_fronthalf(COW1, COW2, COL1, COL2, COH);
-    }
+    color(OTC) translate(
+        [0, COL3+(-FUL1-FUL2+FUL3+FUL4+COL1+COL2)/2, (FUH2+COH)/2]
+    ) cockpit_fronthalf(COW1, COW2, COL1, COL2, COH);
     // wings
-    color(PLC) for(x = [-1, 1]) {
-        translate([x*(WIW1+WIW2+WIW3+FBW2)/2, (-FUL1+FUL3+FUL4)/2, (WIT1-FUH2)/2]) {
-            rotate(-x*90) wing(WIL1, WIL2, WIL3, WIW1, WIW2, WIW3, WIT1, -x*WHS);
-        }
-    }
+    color(PLC) for(x = [-1, 1]) translate(
+        [x*(WIW1+WIW2+WIW3+FBW2)/2, (-FUL1+FUL3+FUL4)/2, (WIT1-FUH2)/2]
+    ) rotate(-x*90) aircraft_wing(
+        WIW1, WIW2, WIW3, WIL1, WIL2, WIL3, WIT1, -x*WHS, WIT1/2
+    );
     // stabilisers and rudder
     color(PLC) translate([0, (-FUL1-FUL2-FUL3)/2, FUVS3*FUH2]) {
         // horizontal stabilisers
         for(x = [-1, 1]) translate([x*(FUW4+HSTW1+HSTW2)/2, 0, 0]) {
-            rotate(-x*90) horizontal_stabiliser(HSTL1, HSTL2, HSTL3, HSTW1, HSTW2, HSTT1, x*HSTSL);
+            rotate(-x*90) aircraft_stabiliser(
+                HSTW1, HSTW2, HSTL1, HSTL2, HSTL3, HSTT1, x*HSTSL, HSTT1/2
+            );
         }
         // vertical stabiliser
         translate([0, 0, (FUH4+VSTH1)/2]) {
@@ -125,7 +129,7 @@ module hurricane() {
     }
     // propeller
     color(OTC) translate([0, (FUL1+FUL2+FUL3+FUL4+PHL)/2, 0]) {
-        propeller(PHL, PHR, PBL, PBW, PBT);
+        aircraft_propeller(PHL, PHR, PBL, PBW, PBT, 2);
     }
 }
 
@@ -222,61 +226,9 @@ module cockpit_fronthalf(w1, w2, l1, l2, h) {
     }
     // front left and right (tetrahedra with right-edge base)
     for(x = [-1, 1]) translate([x*(w1+w2)/4, l2/2]) {
-        scale([(w1-w2)/2, l1, h]) rotate([0, 0, 45-x*45]) right_tri_pyramid(-1/2, -1/2);
-    }
-}
-
-module wing(w1, w2, w3, l1, l2, l3, t1, hs) {
-    /*
-    root towards viewer;
-    shape:
-        tip:    zero thickness
-        top:    horizontal
-        bottom: same slant in middle and outer sections
-    args:
-        w1...w3 = width     (inner to outer)
-        l1...l3 = length    (inner to outer)
-        t1      = thickness (inner)
-        hs      = horizontal slant
-    */
-    l2r = l2/(l2+l3);
-    l3r = l3/(l2+l3);
-    // rear (right hexagonal prism)
-    translate([0, (-l2-l3)/2, 0]) {
-        scale([w1, l1, t1]) hex_prism();
-    }
-    // middle (hexagon to rectangle)
-    translate([0, (l1-l3)/2, 0]) {
-        scale([w1, l2, t1]) hex_to_rect(w2/w1, l3r, hs*l2r/w1, l2r/2);
-    }
-    // outer (rectangular wedge)
-    translate([hs*l2r, (l1+l2)/2, l2r*t1/2]) {
-        scale([w2, l3, l3r*t1]) rect_wedge(w3/w2, hs*l3r/w2, 1/2);
-    }
-}
-
-module horizontal_stabiliser(w1, w2, w3, l1, l2, t1, hs=0) {
-    /*
-    root towards viewer;
-    shape:
-        tip:    zero thickness
-        top:    horizontal
-        bottom: same slant in inner and outer sections
-    args:
-        w1...w3 = width     (inner to outer)
-        l1, l2  = length    (inner to outer)
-        t1      = thickness (inner)
-        hs      = horizontal slant
-    */
-    l1r = l1/(l1+l2);
-    l2r = l2/(l1+l2);
-    // inner (hexagon to rectangle)
-    translate([0, -l2/2, 0]) {
-        scale([w1, l1, t1]) hex_to_rect(w2/w1, l2r, l1r*hs/w1, l1r/2);
-    }
-    // outer (rectangular wedge)
-    translate([hs*l1r, l1/2, l1r*t1/2]) {
-        scale([w2, l2, l2r*t1]) rect_wedge(w3/w2, l2r*hs/w2, 1/2);
+        scale([(w1-w2)/2, l1, h]) {
+            rotate([0, 0, 45-x*45]) right_tri_pyramid(-1/2, -1/2);
+        }
     }
 }
 
@@ -324,21 +276,5 @@ module rudder(w, le, h1, h2) {
     // top
     translate([0, 0, (h1+h2)/4]) scale([w, le, (h1-h2)/2]) {
         tri_pyramid(0, -1/2);
-    }
-}
-
-module propeller(hl, hr, bl, bw, bt) {
-    /*
-    args:
-        hl, hr     = hub   length, radius
-        bl, bw, bt = blade length, width, thickness
-    */
-    // height of hexagonal frustum to make it regular
-    hh = hr*sqrt(3);
-    // hub
-    scale([hr*2, hl, hh]) hex_frustum(1/2);
-    // blades
-    for(x = [0, 1]) rotate([0, 30+x*180, 0]) translate([bl/2, 0, 0]) {
-        rotate([0, -45, -90]) scale([bw, bl, bt]) hex_wedge(1/2);
     }
 }
