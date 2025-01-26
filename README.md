@@ -5,6 +5,7 @@ Table of contents:
 * [Hawker Hurricane](#hawker-hurricane)
 * [Heinkel He 111](#heinkel-he-111)
 * [Tupolev TB-3](#tupolev-tb-3)
+* [Messerschmitt Bf 109 (under construction)](#messerschmitt-bf-109-under-construction)
 
 ## Hawker Hurricane
 File: `hawker-hurricane.scad`. A British fighter. [Schematics](https://commons.wikimedia.org/wiki/File:Hawker_Hurricane_3-view.svg) (Wikimedia Commons)
@@ -26,3 +27,6 @@ File: `tupolev-tb3.scad`. A Soviet heavy bomber. [Schematics](https://commons.wi
 ![front view](tupolev-tb3-front.png)
 ![left view](tupolev-tb3-left.png)
 ![top view](tupolev-tb3-top.png)
+
+## Messerschmitt Bf 109 (under construction)
+File: `messerschmitt-bf109.scad`. A German fighter. [Schematics](https://commons.wikimedia.org/wiki/File:Messerschmitt_Bf_109_G-5_3-seiten_neu.jpg) (Wikimedia Commons)

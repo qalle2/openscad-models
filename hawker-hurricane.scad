@@ -198,7 +198,6 @@ module vertical_stabiliser(w, le, h1, h2) {
         le     = length (bottom; top = this / 3)
         h1, h2 = height (rear, front)
     */
-
     // bottom rear (full-width part)
     translate([0, -le/6, (-h1+h2)/2]) scale([w, le*2/3, h2]) {
         rotate([90, 0, 0]) rect_frustum(1, 1/2, 0, 1/4);
