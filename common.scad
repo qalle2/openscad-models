@@ -139,10 +139,10 @@ module rect_to_right_tri(fx=0, fz=0) {
     polyhedron(
         [
             // rear
-            [-a, -a, -a],
-            [-a, -a,  a],
-            [ a, -a,  a],
-            [ a, -a, -a],
+            [  -a, -a,   -a],
+            [  -a, -a,    a],
+            [   a, -a,    a],
+            [   a, -a,   -a],
             // front
             [fx-a,  a, fz-a],
             [fx-a,  a, fz+a],
@@ -206,6 +206,76 @@ module rect_prism(fx=0, fz=0) {
     // square prism;
     // args: front X/Z offset
     rect_frustum(1, 1, fx, fz);
+}
+
+module trapez_wedge(ts=1, fw=1, fx=0, fz=0) {
+    // trapezoidal wedge;
+    // args: top scale factor, front width, front X/Z offset
+    a =  1/2;
+    b = ts/2;
+    c = fw/2;
+    polyhedron(
+        [
+            // rear
+            [  -a, -a, -a],
+            [  -b, -a,  a],
+            [   b, -a,  a],
+            [   a, -a, -a],
+            // front
+            [fx-c,  a, fz],
+            [fx+c,  a, fz],
+        ],
+        [
+            [0,1,2,3],  // rear
+            [1,4,5,2],  // top
+            [0,3,5,4],  // bottom
+            [0,4,1],    // left
+            [2,5,3],    // right
+        ]
+    );
+}
+
+module trapez_pyramid(ts=1, fx=0, fz=0) {
+    // trapezoidal pyramid;
+    // args: top scale factor, front X/Z offset
+    trapez_wedge(ts, 0, fx, fz);
+}
+
+module trapez_frustum(ts=1, fs=1, fx=0, fz=0) {
+    // frustum of trapezoidal pyramid;
+    // args: top scale factor, front scale factor, front X/Z offset
+    a =     1/2;
+    b =    ts/2;
+    c =    fs/2;
+    d = ts*fs/2;
+    polyhedron(
+        [
+            // rear
+            [  -a, -a,   -a],
+            [  -b, -a,    a],
+            [   b, -a,    a],
+            [   a, -a,   -a],
+            // front
+            [fx-c,  a, fz-c],
+            [fx-d,  a, fz+c],
+            [fx+d,  a, fz+c],
+            [fx+c,  a, fz-c],
+        ],
+        [
+            [0,1,2,3],  // rear
+            [4,7,6,5],  // front
+            [1,5,6,2],  // top
+            [3,7,4,0],  // bottom
+            [0,4,5,1],  // left
+            [2,6,7,3],  // right
+        ]
+    );
+}
+
+module trapez_prism(ts=1, fx=0, fz=0) {
+    // trapezoidal prism;
+    // args: top scale factor, front X/Z offset
+    trapez_frustum(ts, 1, fx, fz);
 }
 
 module hex_to_rect(fw=(sqrt(7)-1)/3, fh=1/2, fx=0, fz=0) {
@@ -469,36 +539,41 @@ module aircraft_propeller(hl, hr, bl, bw, bt, bc) {
 // demo (derived objects in orange)
 DER = [1, .5, 0];
 scale(100) {
-    translate([ 4, 0,  5]) color(DER) tri_pyramid();
-    translate([ 2, 0,  5])            tri_wedge(1/2);
-    translate([-2, 0,  5]) color(DER) tri_prism();
-    translate([-4, 0,  5])            tri_frustum(1/2);
+    translate([ 4, 0,  6]) color(DER) tri_pyramid();
+    translate([ 2, 0,  6])            tri_wedge(1/2);
+    translate([-2, 0,  6]) color(DER) tri_prism();
+    translate([-4, 0,  6])            tri_frustum(1/2);
 
-    translate([ 4, 0,  3]) color(DER) right_tri_pyramid();
-    translate([ 2, 0,  3])            right_tri_wedge(1/2);
-    translate([-2, 0,  3]) color(DER) right_tri_prism();
-    translate([-4, 0,  3])            right_tri_frustum(1/2);
+    translate([ 4, 0,  4]) color(DER) right_tri_pyramid();
+    translate([ 2, 0,  4])            right_tri_wedge(1/2);
+    translate([-2, 0,  4]) color(DER) right_tri_prism();
+    translate([-4, 0,  4])            right_tri_frustum(1/2);
 
-    translate([ 4, 0,  1]) color(DER) rect_pyramid();
-    translate([ 2, 0,  1]) color(DER) rect_wedge(1/2);
-    translate([ 0, 0,  1])            rect_to_right_tri();
-    translate([-2, 0,  1]) color(DER) rect_prism();
-    translate([-4, 0,  1])            rect_frustum(1/2, 1/2);
+    translate([ 4, 0,  2]) color(DER) rect_pyramid();
+    translate([ 2, 0,  2]) color(DER) rect_wedge(1/2);
+    translate([ 0, 0,  2])            rect_to_right_tri();
+    translate([-2, 0,  2]) color(DER) rect_prism();
+    translate([-4, 0,  2])            rect_frustum(1/2, 1/2);
 
-    translate([ 4, 0, -1]) color(DER) hex_pyramid();
-    translate([ 2, 0, -1]) color(DER) hex_wedge(1/2);
-    translate([ 0, 0, -1])            hex_to_rect();
-    translate([-2, 0, -1]) color(DER) hex_prism();
-    translate([-4, 0, -1])            hex_frustum(1/2);
+    translate([ 4, 0,  0]) color(DER) trapez_pyramid(1/2);
+    translate([ 2, 0,  0])            trapez_wedge(1/2, 1/2);
+    translate([-2, 0,  0]) color(DER) trapez_prism(1/2);
+    translate([-4, 0,  0])            trapez_frustum(1/2, 1/2);
 
-    translate([ 4, 0, -3]) color(DER) oct_pyramid();
-    translate([ 2, 0, -3]) color(DER) oct_wedge(1/2);
-    translate([ 0, 0, -3])            rect_cupola(1/2, 1/2);
-    translate([-2, 0, -3]) color(DER) oct_prism();
-    translate([-4, 0, -3])            oct_frustum(1/2);
+    translate([ 4, 0, -2]) color(DER) hex_pyramid();
+    translate([ 2, 0, -2]) color(DER) hex_wedge(1/2);
+    translate([ 0, 0, -2])            hex_to_rect();
+    translate([-2, 0, -2]) color(DER) hex_prism();
+    translate([-4, 0, -2])            hex_frustum(1/2);
 
-    translate([ 5, 0, -5]) color(DER) aircraft_wing(1, 5, 1, 5, 3, 1, 1);
-    translate([ 0, 0, -5]) color(DER) aircraft_stabiliser(3, 1, 3, 2, 1, 1);
-    translate([-5, 0, -5]) color(DER) aircraft_propeller(1, 1, 2, 1/2, 1/4, 2);
+    translate([ 4, 0, -4]) color(DER) oct_pyramid();
+    translate([ 2, 0, -4]) color(DER) oct_wedge(1/2);
+    translate([ 0, 0, -4])            rect_cupola(1/2, 1/2);
+    translate([-2, 0, -4]) color(DER) oct_prism();
+    translate([-4, 0, -4])            oct_frustum(1/2);
+
+    translate([ 5, 0, -6]) color(DER) aircraft_wing(1, 5, 1, 5, 3, 1, 1);
+    translate([ 0, 0, -6]) color(DER) aircraft_stabiliser(3, 1, 3, 2, 1, 1);
+    translate([-5, 0, -6]) color(DER) aircraft_propeller(1, 1, 2, 1/2, 1/4, 2);
 
 }

@@ -43,13 +43,13 @@ cockpit; parts:
     3. mid-rear  (unglazed)
     4. rear      (unglazed)
 */
-COW1 = FBW2;    // bottom
-COW2 = FBW2/3;  // top
+COH  =  40;
+COW1 = FBW2;            // bottom
+COW2 = COW1-COH*FUA*2;  // top
 COL1 =   30;
 COL2 =  150;
 COL3 =   60;
 COL4 =  200;
-COH  =   50;
 
 // horizontal stabilisers (W=width=X, L=length=Y, T=thickness=Z)
 HSTW1 =  190;
@@ -88,22 +88,13 @@ module hurricane() {
     */
     // fuselage
     color(FUC) fuselage(
-        FUA, FUW4, FUL1, FUL2, FUL3, FUL4, FUH1, FUH2, FUH3, FUH4, FUVS3*FUH2
+        FUA, FUW4, FUL1, FUL2, FUL3, FUL4, FUH1, FUH2, FUH3, FUH4, FUVS3*FUH2,
+        COW1, COW2, COL3, COL4, COH
     );
-    // rear half of cockpit
-    color(FUC) {
-        // width at rear
-        rw = COW1*(1-COL4/FUL3*(1-FUW3/FUW2));
-        // total height; also total height of rear half
-        h = ((FUH2-FUH3)/2-FUVS3*FUH2)/FUL3 * COL4 + COH;
-        translate(
-            [0, (-FUL1-FUL2+FUL3+FUL4+COL3-COL4)/2, COH+(FUH2-h)/2]
-        ) cockpit_rearhalf(rw, COW1, COW2, COL4, COL3, h, COH);
-    }
-    // front half of cockpit
+    // front half of cockpit (glazed)
     color(OTC) translate(
         [0, COL3+(-FUL1-FUL2+FUL3+FUL4+COL1+COL2)/2, (FUH2+COH)/2]
-    ) cockpit_fronthalf(COW1, COW2, COL1, COL2, COH);
+    ) cockpit_fronthalf(COW1, COW2, COL2, COL1, COH);
     // wings
     color(PLC) for(x = [-1, 1]) translate(
         [x*(WIW1+WIW2+WIW3+FBW2)/2, (-FUL1+FUL3+FUL4)/2, (WIT1-FUH2)/2]
@@ -135,15 +126,20 @@ module hurricane() {
 
 hurricane();
 
-module fuselage(whr, w4, l1, l2, l3, l4, h1, h2, h3, h4, vs3) {
+module fuselage(
+    whr, w4, l1, l2, l3, l4, h1, h2, h3, h4, vs3, cw1, cw2, cl1, cl2, ch
+) {
     /*
     shape: four sections longitudinally;
     args:
-        whr     = width/height ratio (front to mid-rear)
-        w4      = width              (rear only)
-        l1...l4 = length             (front to rear)
-        h1...h3 = height             (front to rear)
-        vs3     = vertical slant     (mid-rear only)
+        whr      = width/height ratio (front to mid-rear)
+        w4       = width              (rear only)
+        l1...l4  = length             (front to rear)
+        h1...h3  = height             (front to rear)
+        vs3      = vertical slant     (mid-rear only)
+        cw1, cw2 = cockpit width      (front bottom, front top)
+        cl1, cl2 = cockpit length     (front, rear)
+        ch       = cockpit height
     TODO: order of args should be rear to front
     */
     // rear (square cupola)
@@ -162,73 +158,35 @@ module fuselage(whr, w4, l1, l2, l3, l4, h1, h2, h3, h4, vs3) {
     translate([0, (l2+l3+l4)/2, 0]) {
         scale([h2*whr, l1, h2]) oct_frustum(h1/h2);
     }
-}
-
-module cockpit_rearhalf(w1, w2, w3, l1, l2, h1, h2) {
-    /*
-    args:
-        w1...w3 = width  (rear, front bottom, front top)
-        l1, l2  = length (rear, front)
-        h1, h2  = height (rear, front)
-    */
-    // front (trapezoidal prism or rectangular frustum)
-    translate([0, l1/2, (h1-h2)/2]) scale([w2, l2, h2]) {
-        rotate([90, 0, 0]) rect_frustum(w3/w2);
+    // rear half of cockpit (non-glazed)
+    rw = cw1*(1-(cl2/l3)*(1-h3/h2));  // rear width
+    cvs = -ch/2+((h3-h2)/2+vs3)*(cl2/l3);  // vertical slant
+    // rear
+    translate([0, (-l1-l2+l3+l4-cl2)/2, (ch+h2)/2]) {
+        scale([cw1, cl2, ch]) rotate(180) {
+            trapez_wedge(cw2/cw1, rw/cw1, 0, cvs/ch);
+        }
     }
-    // rear (trapezoidal wedge)
-    x1 = w1/2;
-    x2 = w2/2;
-    x3 = w3/2;
-    //
-    y1 = (-l1-l2)/2;
-    y2 = ( l1-l2)/2;
-    //
-    z1 = -h1/2;
-    z2 =  h1/2-h2;
-    z3 =  h1/2;
-    //
-    polyhedron(
-        [
-            // rear (0-1)
-            [-x1, y1, z1],
-            [ x1, y1, z1],
-            // mid (2-5)
-            [-x2, y2, z2],
-            [-x3, y2, z3],
-            [ x3, y2, z3],
-            [ x2, y2, z2],
-        ],
-        [
-            [2,5,4,3],  // front
-            [0,3,4,1],  // rear  top
-            [0,1,5,2],  // rear  bottom
-            [0,2,3],    // rear  left
-            [1,4,5],    // rear  right
-        ]
-    );
+    // front
+    translate([0, (-l1-l2+l3+l4+cl1)/2, (ch+h2)/2]) {
+        scale([cw1, cl1, ch]) trapez_prism(cw2/cw1);
+    }
 }
 
 module cockpit_fronthalf(w1, w2, l1, l2, h) {
     /*
-    shape: trapezoidal prism and trapezoidal wedge;
     args:
         w1, w2 = width  (bottom, top)
-        l1, l2 = length (front, rear)
+        l1, l2 = length (rear, front)
         h      = height
     */
-    // rear (rectangular frustum or trapezoidal prism)
-    translate([0, -l1/2, 0]) scale([w1, l2, h]) {
-        rotate([90, 0, 0]) rect_frustum(w2/w1);
+    // rear
+    translate([0, -l2/2, 0]) scale([w1, l1, h]) {
+        trapez_prism(w2/w1);
     }
-    // front center (rectangular wedge)
-    translate([0, l2/2]) scale([w2, l1, h]) {
-        rotate([90, 0, 0]) rect_wedge(1, 0, 1/2);
-    }
-    // front left and right (tetrahedra with right-edge base)
-    for(x = [-1, 1]) translate([x*(w1+w2)/4, l2/2]) {
-        scale([(w1-w2)/2, l1, h]) {
-            rotate([0, 0, 45-x*45]) right_tri_pyramid(-1/2, -1/2);
-        }
+    // front
+    translate([0, l1/2]) scale([w1, l2, h]) {
+        trapez_wedge(w2/w1, w2/w1, 0, -1/2);
     }
 }
 
