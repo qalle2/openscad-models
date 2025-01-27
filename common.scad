@@ -278,6 +278,47 @@ module trapez_prism(ts=1, fx=0, fz=0) {
     trapez_frustum(ts, 1, fx, fz);
 }
 
+module trapez_frustum2(rtw=1, fbw=1, ftw=1, fh=1, fx=0, fz=0) {
+    /*
+    frustum of trapezoidal pyramid;
+    front aspect ratio may differ from rear;
+    args:
+        rtw     = rear top width
+        fbw/ftw = front bottom/top width
+        fh      = front height
+        fx/fz   = front X/Z offset
+    */
+    a =   1/2;
+    b = rtw/2;
+    c = fbw/2;
+    d = ftw/2;
+    e =  fh/2;
+    polyhedron(
+        [
+            // rear
+            [  -a, -a,   -a],
+            [  -b, -a,    a],
+            [   b, -a,    a],
+            [   a, -a,   -a],
+            // front
+            [fx-c,  a, fz-e],
+            [fx-d,  a, fz+e],
+            [fx+d,  a, fz+e],
+            [fx+c,  a, fz-e],
+        ],
+        [
+            [0,1,2,3],  // rear
+            [4,7,6,5],  // front
+            [1,5,6,2],  // top
+            [3,7,4,0],  // bottom
+            [0,5,1],    // left top
+            [0,4,5],    // left bottom
+            [2,6,3],    // right top
+            [3,6,7],    // right bottom
+        ]
+    );
+}
+
 module hex_to_rect(fw=(sqrt(7)-1)/3, fh=1/2, fx=0, fz=0) {
     // rear face is hexagon, front face is rectangle;
     // args: front width/height, front X/Z offset
@@ -609,6 +650,7 @@ scale(100) {
     translate([ 2, 0,  0])            trapez_wedge(1/2, 1/2);
     translate([-2, 0,  0]) color(DER) trapez_prism(1/2);
     translate([-4, 0,  0])            trapez_frustum(1/2, 1/2);
+    translate([-6, 0,  0])            trapez_frustum2(2/3, 1/2, 1/4, 1/2);
 
     translate([ 4, 0, -2]) color(DER) hex_pyramid();
     translate([ 2, 0, -2]) color(DER) hex_wedge(1/2);
