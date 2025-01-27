@@ -10,10 +10,10 @@ fuselage; sections:
     4: rear      (rect. cupola)
 */
 FUL1 = 154; FUW1 =  67; FUH1 =  72;
-FUL2 = 220; FUW2 =  78; FUH2 = 114;
+FUL2 = 220; FUW2 =  78; FUH2 =  95;
 FUL3 = 324; FUW3 =  33; FUH3 =  70;
 FUL4 = 100; FUW4 =  10; FUH4 =  40;
-FUVS3 = 15;  // vertical slant
+FU4Z =  35;  // Z position
 FBW2 = FUW2/(1+1*sqrt(2));  // flat bottom/top width
 FBW3 = FUW3/(1+1*sqrt(2));  // flat bottom/top width
 
@@ -22,7 +22,7 @@ COL2 = 20;
 COL3 = 70;
 COL4 = 30;
 COL1 = FUL2-COL2-COL3-COL4;
-COH  = 20;
+COH  = 40;
 COW1 = FBW2;    // top
 COW2 = COW1/2;  // bottom
 
@@ -62,7 +62,7 @@ RUH2 = RUH1-(VSTL1-VSTL2)*2;
 // propeller
 PHL =  53;     // hub   length
 PHR = FUW1/2;  // hub   radius
-PBL = 148;     // blade length
+PBL = 140;     // blade length
 PBW =  25;     // blade width
 PBT =  10;     // blade thickness
 
@@ -74,30 +74,31 @@ OTC = [.5, .8, .8];  // other parts
 module bf109() {
     color(FUC) fuselage(
         FUL1, FUL2, FUL3, FUL4, FUW1, FUW2, FUW3, FUW4,
-        FUH1, FUH2, FUH3, FUH4, FUVS3
+        FUH1, FUH2, FUH3, FUH4, FU4Z
     );
     // wings
     color(PLC) for(i = [-1, 1]) translate([i*(WIL1+WIL2+FBW2)/2, (-FUL1+FUL3+FUL4)/2, -(FUH2-WIT)/2]) {
         rotate(-i*90) aircraft_stabiliser(WIL1, WIL2, WIW1, WIW2, WIW3, WIT, -i*WIHS, WIVS);
     }
     // horizontal stabilisers
-    color(PLC) for(i = [-1, 1]) translate([i*(HSTL1+HSTL2)/2, (-FUL1-FUL2-FUL3-FUL4+HSTW1)/2+HSTX, FUVS3+HSTZ]) {
+    color(PLC) for(i = [-1, 1]) translate([i*(HSTL1+HSTL2)/2, (-FUL1-FUL2-FUL3-FUL4+HSTW1)/2+HSTX, FU4Z+HSTZ]) {
         rotate(-i*90) aircraft_stabiliser(HSTL1, HSTL2, HSTW1, HSTW2, HSTW3, HSTT, -i*HSTHS, 0);
     }
     // vertical stabiliser
-    color(PLC) translate([0, (-FUL1-FUL2-FUL3-FUL4+VSTW)/2, (FUH4+VSTL1)/2+FUVS3]) {
+    color(PLC) translate([0, (-FUL1-FUL2-FUL3-FUL4+VSTW)/2, (FUH4+VSTL1)/2+FU4Z]) {
         vertical_stabiliser(VSTT, VSTW, VSTL1, VSTL2);
     }
     // rudder
-    color(PLC) translate([0, (-FUL1-FUL2-FUL3-FUL4-RUL)/2, (RUH1-FUH4)/2+FUVS3]) {
+    color(PLC) translate([0, (-FUL1-FUL2-FUL3-FUL4-RUL)/2, (RUH1-FUH4)/2+FU4Z]) {
         rotate(180) rudder(FUW4, RUL, RUH1, RUH2);
     }
     // cockpit
-    color(FUC) translate([0, (-FUL1+FUL2+FUL3+FUL4-COL1-COL2)/2, FUH2/2+COH/4]) {
-        cockpit_front_nonglazed(COL1, COL2, COW1, COW2, COH);
+    color(FUC) translate([0, (FUL2+FUL3+FUL4-COL1-COL2)/2, FUH2/2+COH/4]) {
+        fvs = -COH/4+(FUH1-FUH2)/2;  // front vertical slant
+        cockpit_front_nonglazed(FUL1, COL1, COL2, COW1, COW2, COH/2, fvs);
     }
     color(FUC) translate([0, (-FUL1-FUL2+FUL4+COL4)/2, (FUH2+COH)/2]) {
-        rvs = -COH/2-(FUH2-FUH3)/2+FUVS3;  // rear vertical slant
+        rvs = -COH/2-(FUH2-FUH3)/2+FU4Z;  // rear vertical slant
         cockpit_rear_nonglazed(COL4, FUL3, COW1, COW2, FBW3, COH, rvs);
     }
     color(OTC) translate([0, (-FUL1-FUL2+FUL3+FUL4+COL2+COL3+COL4)/2, (FUH2+COH)/2]) {
@@ -109,24 +110,30 @@ module bf109() {
 
 bf109();
 
-module fuselage(l1, l2, l3, l4, w1, w2, w3, w4, h1, h2, h3, h4, vs3) {
+module fuselage(l1, l2, l3, l4, w1, w2, w3, w4, h1, h2, h3, h4, z3) {
     /*
     args:
         l1...l4: length (front to rear)
         w1...w4: width  (front to rear)
         h1...h4: height (front to rear)
-        vs3:     vertical slant of mid-rear section
+        z3:      Z position of mid-rear section
     */
     // front
     translate([0, (l2+l3+l4)/2, 0]) scale([w2, l1, h2]) {
         oct_frustum2(w1/w2, h1/h2);
     }
     // mid-front
-    translate([0, (-l1+l3+l4)/2, 0]) scale([w2, l2, h2]) oct_prism();
+    translate([0, (-l1+l3+l4)/2, 0]) scale([w2, l2, h2]) {
+        oct_prism();
+    }
     // mid-rear
-    translate([0, (-l1-l2+l4)/2, 0]) scale([w2, l3, h2]) rotate(180) oct_frustum2(w3/w2, h3/h2, 0, vs3/h2);
+    translate([0, (-l1-l2+l4)/2, 0]) scale([w2, l3, h2]) {
+        rotate(180) oct_frustum2(w3/w2, h3/h2, 0, z3/h2);
+    }
     // rear
-    translate([0, (-l1-l2-l3)/2, vs3]) scale([w3, l4, h3]) rotate(180) rect_cupola(w4/w3, h4/h3);
+    translate([0, (-l1-l2-l3)/2, z3]) scale([w3, l4, h3]) {
+        rotate(180) rect_cupola(w4/w3, h4/h3);
+    }
 }
 
 module vertical_stabiliser(w, le, h1, h2) {
@@ -175,20 +182,25 @@ module rudder(w, le, h1, h2) {
     }
 }
 
-module cockpit_front_nonglazed(l1, l2, w1, w2, h) {
+module cockpit_front_nonglazed(l1, l2, l3, w1, w2, h, fvs) {
     /*
     args:
-        l1, l2 = length (front to rear)
-        w1, w2 = width  (bottom, top)
-        h      = height
+        l1...l3 = length (front to rear)
+        w1, w2  = width  (bottom, top)
+        h       = height
+        fvs     = front vertical slant
     */
-    // front (from front edge of mid-front fuselage)
-    translate([0, l2/2, 0]) {
-        scale([w1, l1, h/2]) trapez_wedge(w2/w1, 1, 0, -1/2);
+    // front
+    translate([0, (l2+l3)/2, 0]) {
+        scale([w1, l1, h]) trapez_wedge(w2/w1, 1, 0, fvs/h);
     }
-    // mid-front (just front of glazed cockpit)
-    translate([0, -l1/2, 0]) {
-        scale([w1, l2, h/2]) rotate(180) trapez_wedge(w2/w1, 1, 0, -1/2);
+    // mid
+    translate([0, (-l1+l3)/2, 0]) {
+        scale([w1, l2, h]) trapez_prism(w2/w1);
+    }
+    // rear
+    translate([0, (-l1-l2)/2, 0]) {
+        scale([w1, l3, h]) rotate(180) trapez_wedge(w2/w1, 1, 0, -1/2);
     }
 }
 
@@ -200,7 +212,7 @@ module cockpit_rear_nonglazed(l1, l2, w1, w2, w3, h, rvs) {
         h       = height (front)
         rvs     = rear vertical slant
     */
-    // mid-rear (just rear of glazed cockpit)
+    // front
     translate([0, l2/2, 0]) scale([w1, l1, h]) {
         trapez_wedge(w2/w1, 1, 0, -1/2);
     }
