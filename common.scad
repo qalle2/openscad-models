@@ -470,6 +470,56 @@ module oct_prism(fx=0, fz=0) {
     oct_frustum(1, fx, fz);
 }
 
+module oct_frustum2(fw, fh, fx=0, fz=0) {
+    // frustum of octagonal pyramid;
+    // front aspect ratio may differ from rear;
+    // args: front width/height, front X/Z offset
+    a  = 1/2;
+    b =  1/(2+2*sqrt(2));
+    c = fw/2;
+    d = fw/(2+2*sqrt(2));
+    e = fh/2;
+    f = fh/(2+2*sqrt(2));
+    polyhedron(
+        [
+            // rear (0-7)
+            [  -a, -a,   -b],
+            [  -a, -a,    b],
+            [  -b, -a,    a],
+            [   b, -a,    a],
+            [   a, -a,    b],
+            [   a, -a,   -b],
+            [   b, -a,   -a],
+            [  -b, -a,   -a],
+            // front (8-15)
+            [fx-c,  a, fz-f],
+            [fx-c,  a, fz+f],
+            [fx-d,  a, fz+e],
+            [fx+d,  a, fz+e],
+            [fx+c,  a, fz+f],
+            [fx+c,  a, fz-f],
+            [fx+d,  a, fz-e],
+            [fx-d,  a, fz-e],
+        ],
+        [
+            [ 0, 1, 2, 3, 4, 5, 6, 7],  // rear
+            [ 8,15,14,13,12,11,10, 9],  // front
+            [ 0, 8, 9, 1],  // left
+            [ 1, 9, 2],     // left top
+            [ 2, 9,10],     // top left
+            [ 2,10,11, 3],  // top
+            [ 3,11,12],     // top right
+            [ 3,12, 4],     // right top
+            [ 4,12,13, 5],  // right
+            [ 6,13,14],     // bottom right
+            [ 5,13, 6],     // right bottom
+            [ 6,14,15, 7],  // bottom
+            [ 0, 7, 8],     // left bottom
+            [ 7,15, 8],     // bottom left
+        ]
+    );
+}
+
 module aircraft_wing(l1, l2, l3, w1, w2, w3, t1, hs=0, vs=0) {
     /*
     an aircraft wing;
@@ -571,6 +621,7 @@ scale(100) {
     translate([ 0, 0, -4])            rect_cupola(1/2, 1/2);
     translate([-2, 0, -4]) color(DER) oct_prism();
     translate([-4, 0, -4])            oct_frustum(1/2);
+    translate([-6, 0, -4])            oct_frustum2(1/3, 1/2);
 
     translate([ 5, 0, -6]) color(DER) aircraft_wing(1, 5, 1, 5, 3, 1, 1);
     translate([ 0, 0, -6]) color(DER) aircraft_stabiliser(3, 1, 3, 2, 1, 1);
